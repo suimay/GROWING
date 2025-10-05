@@ -1,0 +1,42 @@
+# ---------- OS (시스템임시파일) ----------
+.DS_Store
+Thumbs.db
+
+# ---------- Visual Studio (윈도우) ----------
+.vs/
+x64/
+*.sln
+*.vcxproj
+*.vcxproj.*
+*.vcproj
+*.vcproj.*
+
+# VS 빌드 산출물
+*.obj
+*.pdb
+*.ilk
+*.tlog
+*.idb
+*.ipch
+*.log
+*.lib
+*.exp
+*.exe
+*.dll
+
+# ---------- CMake (맥) ----------
+/build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# ---------- VSCode (수인 로컬 전용) ----------
+.vscode/
+
+# ---------- vcpkg/SDL2 (윈도우 쪽 흔적/대용량 캐시 차단) ----------
+SDL2/vcpkg/buildtrees/
+SDL2/vcpkg/downloads/
+SDL2/vcpkg/packages/
+SDL2/vcpkg/installed/
