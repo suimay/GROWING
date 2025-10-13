@@ -1,0 +1,74 @@
+# ---- OS 공통 ----
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# ---- Visual Studio ----
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.opendb
+
+# ---- 빌드 산출물 ----
+/x64/
+/Debug/
+/Release/
+/build/
+/bin/
+/obj/
+/out/
+/temp/
+/*.exe
+/*.dll
+/*.pdb
+/*.lib
+/*.ilk
+/*.log
+
+# ---- Visual Studio 프로젝트 파일 (공유 불필요한 캐시) ----
+*.VC.VC.opendb
+*.VC.db
+*.vscode/
+*.vs/
+.vscode/
+.vs/
+*.idb
+*.ipch
+
+# ---- Mac 빌드 관련 ----
+*.dSYM/
+*.o
+*.out
+*.DS_Store
+
+# ---- SDL2 또는 외부 라이브러리 ----
+/vcpkg_installed/
+/vcpkg/
+/external/
+/deps/
+/lib/
+/include/SDL2/*
+
+# ---- 임시 파일 ----
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# ---- 개인 설정 ----
+*.log
+*.ini
+*.config
+*.cache
+*.db
+
+# ---- IDE 설정 (Mac용 Visual Studio, CLion, Xcode 등) ----
+.idea/
+*.xcworkspace/
+*.xcodeproj/
+*.xcuserstate
+*.xcuserdata/

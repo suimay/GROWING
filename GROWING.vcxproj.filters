@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="소스 파일\assets">
+      <UniqueIdentifier>{5ae6e86d-5980-4d55-9b33-fa525f8eda04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\build">
+      <UniqueIdentifier>{e6574cf5-b974-4157-b7e8-83f7891f7f07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\core">
+      <UniqueIdentifier>{9614c733-764c-4198-b155-2ebbcb41199a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\include">
+      <UniqueIdentifier>{efb73dab-f0fb-425c-8635-e009c45af8e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\utils">
+      <UniqueIdentifier>{de085e75-86d6-452a-ad32-169de3c76e41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\scenes">
+      <UniqueIdentifier>{3f5f7a6b-d2c3-4168-bea4-7bb6bdc4d5dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\ui">
+      <UniqueIdentifier>{aa261530-7884-4e10-8521-f24bfb3b58ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\assets\sounds">
+      <UniqueIdentifier>{4fb76aa9-18f6-4bb7-8e87-cf014bae319a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\assets\fonts">
+      <UniqueIdentifier>{6885b364-39e6-4d4c-a00b-fce12b1ac4b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\assets\images">
+      <UniqueIdentifier>{217023b4-0b9b-4d5c-be87-0a0240746c12}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="game.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="scene_manager.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_button.c">
+      <Filter>소스 파일\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\timer.c">
+      <Filter>소스 파일\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="scenes\scene_mainmenu.c">
+      <Filter>소스 파일\scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="scenes\scene_credits.c">
+      <Filter>소스 파일\scenes</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\scene.h">
+      <Filter>소스 파일\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui.h">
+      <Filter>소스 파일\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\core.h">
+      <Filter>소스 파일\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utils.h">
+      <Filter>소스 파일\include</Filter>
+    </ClInclude>
+    <ClInclude Include="game.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="scene_manager.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="include\common.h">
+      <Filter>소스 파일\include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
