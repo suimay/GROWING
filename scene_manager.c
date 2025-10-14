@@ -4,15 +4,30 @@
 Scene* G_Scenes[SCENE__COUNT] = { 0 };
 SceneID G_CurrentScene = SCENE_MAINMENU;
 
-void scene_register(SceneID id, Scene* sc) { G_Scenes[id] = sc; }
+void scene_register(SceneID id, Scene* sc) {
+    if (id < 0 || id >= SCENE__COUNT) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "[SCENE] register out of range id=%d", id);
+        return;
+    }
+    G_Scenes[id] = sc;
+    //SDL_Log("[SCENE] registered id=%d (%s)", id, sc ? sc->debug_name : "(null)");
+}
 
 static void do_switch(SceneID id) {
+    if (id < 0 || id >= SCENE__COUNT) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "[SCENE] invalid id=%d", id);
+        return;
+    }
     if (G_Scenes[G_CurrentScene] && G_Scenes[G_CurrentScene]->cleanup)
         G_Scenes[G_CurrentScene]->cleanup();
 
     G_CurrentScene = id;
 
-    if (G_Scenes[id] && G_Scenes[id]->init)
+    if (!G_Scenes[id]) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "[SCENE] id=%d not registered", id);
+        return;
+    }
+    if (G_Scenes[id]->init)
         G_Scenes[id]->init();
 }
 

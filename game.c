@@ -4,11 +4,17 @@
 SDL_Window* G_Window = NULL;
 SDL_Renderer* G_Renderer = NULL;
 int           G_Running = 1;
-
+int G_SelectedPlantIndex = -1;
 TTF_Font* G_FontMain = NULL;
 Mix_Music* G_BGM = NULL;
 
+
+extern void plantdb_free(void);
+Mix_Chunk* G_SFX_Click = NULL;
+Mix_Chunk* G_SFX_Hover = NULL;
+
 int game_init(void) {
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER) != 0) {
         SDL_Log("SDL_Init: %s", SDL_GetError()); return 0;
     }
@@ -35,18 +41,20 @@ int game_init(void) {
     G_BGM = Mix_LoadMUS(ASSETS_SOUNDS_DIR "MAINSCENEBGM.wav");
     if (!G_BGM) SDL_Log("LoadMUS: %s", Mix_GetError());
     else { Mix_VolumeMusic((int)(0.7f * MIX_MAX_VOLUME)); Mix_PlayMusic(G_BGM, -1); }
+        
+    G_SFX_Click = Mix_LoadWAV(ASSETS_SOUNDS_DIR "click.wav");
+    G_SFX_Hover = Mix_LoadWAV(ASSETS_SOUNDS_DIR "move.wav");
 
     return 1;
 }
 
 void game_shutdown(void) {
-    if (G_BGM) { Mix_HaltMusic(); Mix_FreeMusic(G_BGM); G_BGM = NULL; }
-    if (G_FontMain) { TTF_CloseFont(G_FontMain); G_FontMain = NULL; }
+    if (G_SFX_Click) { Mix_FreeChunk(G_SFX_Click); G_SFX_Click = NULL; }
+    if (G_SFX_Hover) { Mix_FreeChunk(G_SFX_Hover); G_SFX_Hover = NULL; }
 
-    if (G_Renderer) { SDL_DestroyRenderer(G_Renderer); G_Renderer = NULL; }
-    if (G_Window) { SDL_DestroyWindow(G_Window);     G_Window = NULL; }
-
+    plantdb_free();
     Mix_CloseAudio();
     TTF_Quit();
     SDL_Quit();
 }
+

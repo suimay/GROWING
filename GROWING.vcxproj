@@ -114,7 +114,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Users\kimgi\source\repos\GROWING\SDL2\vcpkg\installed\x64-windows\lib\manual-link;C:\Users\kimgi\source\repos\GROWING\SDL2\vcpkg\installed\x64-windows\lib;C:\Users\kimgi\source\repos\GROWING\SDL2\vcpkg\installed\x64-windows\debug\lib;C:\Users\kimgi\source\repos\GROWING\SDL2\vcpkg\installed\x64-windows\debug\lib\manual-link;C:\Users\kimgi\source\repos\GROWING\SDL2\vcpkg\installed\x64-windows\lib;C:\Users\kimgi\source\repos\GROWING\SDL2\vcpkg\installed\x64-windows\debug\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);SDL2.lib; SDL2main.lib; SDL2_image.lib; SDL2_ttf.lib;SDL2_mixer.lib;</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);SDL2main.lib;SDL2.lib; SDL2main.lib; SDL2_image.lib; SDL2_ttf.lib;SDL2_mixer.lib;</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>if exist "$(ProjectDir)..\vcpkg\installed\x64-windows\bin" xcopy /y /d /i "$(ProjectDir)..\vcpkg\installed\x64-windows\bin\*.dll"  "$(OutDir)"</Command>
@@ -132,21 +132,29 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);SDL2main.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="core\plant_db.c" />
     <ClCompile Include="game.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="scenes\scene_credits.c" />
+    <ClCompile Include="scenes\scene_game.c" />
+    <ClCompile Include="scenes\scene_loading.c" />
     <ClCompile Include="scenes\scene_mainmenu.c" />
+    <ClCompile Include="scenes\scene_selectplant.c" />
+    <ClCompile Include="scenes\scene_settings.c" />
     <ClCompile Include="scene_manager.c" />
     <ClCompile Include="ui\ui_button.c" />
+    <ClCompile Include="ui\ui_progressbar.c" />
     <ClCompile Include="utils\timer.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h" />
     <ClInclude Include="include\common.h" />
     <ClInclude Include="include\core.h" />
+    <ClInclude Include="include\loading.h" />
     <ClInclude Include="include\scene.h" />
     <ClInclude Include="include\ui.h" />
     <ClInclude Include="include\utils.h" />

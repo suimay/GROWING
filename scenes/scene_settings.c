@@ -1,10 +1,12 @@
 // scene_settings.c
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_mixer.h>
-#include <stdio.h>
-#include "../include/scene.h"   // Scene 구조체, switch_scene() 선언 포함
+#include "../include/scene.h"
+#include "../scene_manager.h"
+#include "../game.h"
+#include "../include/ui.h"   // Scene 구조체, switch_scene() 선언 포함
 
+
+static SDL_Texture* s_bg = NULL;
+static TTF_Font* s_titleFont = NULL;
 // ---------------- 슬라이더 구조 ----------------
 typedef struct {
     SDL_Rect bar;
@@ -22,6 +24,7 @@ typedef struct {
 // ---------------- 전역 ----------------
 static Slider bgm_slider;
 static Slider sfx_slider;
+static Button sfx_button;
 static Button btn_test;
 static Button btn_back;
 static Mix_Chunk* sfx_click = NULL;
@@ -78,11 +81,15 @@ static void settings_init(void) {
     bgm_slider.dragging = 0;
 
     // SFX 슬라이더
+    sfx_button.rc = (SDL_Rect){ cx - 200, baseY + 100, 400, 10 };
+    sfx_button.label = "효과음 On/Off";
+    /*
     sfx_slider.bar = (SDL_Rect){ cx - 200, baseY + 100, 400, 10 };
     sfx_slider.handle = (SDL_Rect){ cx - 10, baseY + 95, 20, 20 };
     sfx_slider.value = 0.5f;
     sfx_slider.dragging = 0;
-
+    */
+    
     // 버튼
     btn_test.rc = (SDL_Rect){ cx - 150, baseY + 200, 150, 40 };
     btn_test.label = "효과음 테스트";
@@ -110,25 +117,27 @@ static void settings_handle(SDL_Event* e) {
 
     switch (e->type) {
     case SDL_QUIT:
-        g_running = 0;
+        G_Running = 0;
         break;
     case SDL_KEYDOWN:
         if (e->key.keysym.sym == SDLK_ESCAPE)
-            switch_scene(SCENE_MAIN_MENU);
+            scene_switch(SCENE_MAINMENU);
         break;
     case SDL_MOUSEBUTTONDOWN:
         if (e->button.button == SDL_BUTTON_LEFT) {
             // BGM 슬라이더
             if (point_in_rect(mx, my, bgm_slider.handle)) bgm_slider.dragging = 1;
-            // SFX 슬라이더
-            else if (point_in_rect(mx, my, sfx_slider.handle)) sfx_slider.dragging = 1;
+            // SFX on / off
+            else if (point_in_rect(mx, my, sfx_button.rc)) {
+                Mix_PlayChannel(-1, sfx_click, 0);
+            }
             // 효과음 테스트
             else if (point_in_rect(mx, my, btn_test.rc)) {
                 Mix_PlayChannel(-1, sfx_click, 0);
             }
             // 뒤로가기
             else if (point_in_rect(mx, my, btn_back.rc)) {
-                switch_scene(SCENE_MAIN_MENU);
+                scene_switch(SCENE_MAINMENU);
             }
         }
         break;
@@ -163,7 +172,7 @@ static void settings_update(float dt) { (void)dt; }
 // ---------------- 렌더 ----------------
 static void settings_render(SDL_Renderer* r) {
     SDL_SetRenderDrawColor(r, 16, 20, 28, 255);
-    SDL_RenderClear(r);
+    
 
     draw_text(r, "설정", 450, 100);
     draw_text(r, "BGM 볼륨", bgm_slider.bar.x, bgm_slider.bar.y - 30);
@@ -179,7 +188,7 @@ static void settings_render(SDL_Renderer* r) {
     draw_text(r, btn_test.label, btn_test.rc.x + 10, btn_test.rc.y + 10);
     draw_text(r, btn_back.label, btn_back.rc.x + 20, btn_back.rc.y + 10);
 
-    SDL_RenderPresent(r);
+    
 }
 
 // ---------------- 정리 ----------------
@@ -195,11 +204,91 @@ static void settings_cleanup(void) {
     }
 }
 
-// ---------------- Scene 구조체 ----------------
-Scene SETTINGS_SCENE = {
-    settings_init,
-    settings_handle,
-    settings_update,
-    settings_render,
-    settings_cleanup
-};
+//
+static void init(void) {
+    
+    int want = IMG_INIT_PNG;
+    if ((IMG_Init(want) & want) != want) {
+        SDL_Log("IMG_Init: %s", IMG_GetError());
+    }
+    s_bg = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "bg_title.png");
+    if (!s_bg) {
+        SDL_Log("Load bg_title.png failed: %s", IMG_GetError());
+    }
+
+    s_titleFont = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 48);
+    if (!s_titleFont) {
+        SDL_Log("TitleFont Open: %s", TTF_GetError());
+    }
+
+    SDL_Log("[SETTIGNS] TTF_WasInit=%d", TTF_WasInit());
+    {
+        const char* p = ASSETS_FONTS_DIR "NotoSansKR.ttf";
+        SDL_RWops* rw = SDL_RWFromFile(p, "rb");
+        SDL_Log("[SETTINGS] font path: %s, exist=%s", p, rw ? "YES" : "NO");
+        if (rw) SDL_RWclose(rw);
+    }
+
+    if (!s_titleFont && !G_FontMain) {
+        SDL_Log("[SETTINGS] No font available (both title and global NULL)");
+    }
+
+    // render() 타이틀 그리기 직전에
+    SDL_Log("[SETTINGS] render title try");
+
+}
+
+static void handle(SDL_Event* e)
+{
+    if (e->type == SDL_QUIT) {
+        G_Running = 0;
+        return;
+    }
+    if (e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_ESCAPE) {
+        scene_switch(SCENE_MAINMENU);
+    }
+    if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT) {
+        scene_switch(SCENE_MAINMENU);
+    }
+    
+
+}
+
+static void update(float dt) { (void)dt; }
+
+static void render(SDL_Renderer* r) {
+    settings_render(r);
+    // 0) 매 프레임 시작할 때만 Clear
+    SDL_SetRenderDrawColor(r, 16, 20, 28, 255);
+    SDL_RenderClear(r);
+
+    if (s_bg) {
+        int w, h; SDL_GetRendererOutputSize(r, &w, &h);
+        SDL_Rect dst = { 0,0,w,h };
+        SDL_RenderCopy(r, s_bg, NULL, &dst);
+    }
+    else {
+        int w, h; SDL_GetRendererOutputSize(r, &w, &h);
+        for (int y = 0; y < h; ++y) {
+            float t = (float)y / (float)h;
+            Uint8 R = (Uint8)(16 + t * 20);
+            Uint8 G = (Uint8)(20 + t * 60);
+            Uint8 B = (Uint8)(28 + t * 40);
+            SDL_SetRenderDrawColor(r, R, G, B, 255);
+            SDL_RenderDrawLine(r, 0, y, w, y);
+        }
+    }
+}
+
+static void cleanup(void)
+{
+    SDL_Log("SETTINGS: cleanup()");
+    if (s_bg) { SDL_DestroyTexture(s_bg); s_bg = NULL; }
+    if (s_titleFont) { TTF_CloseFont(s_titleFont); s_titleFont = NULL; }
+}
+
+static Scene SCENE_OBJ = { init, handle, update, render, cleanup, "Settings" };
+Scene* scene_settings_object(void)
+{
+    return &SCENE_OBJ;
+}

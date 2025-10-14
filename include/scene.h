@@ -9,6 +9,7 @@ typedef struct Scene {
     void (*render)(SDL_Renderer*);
     void (*cleanup)(void);
     const char* name;
+    char debug_name;
 } Scene;
 
 typedef enum {
@@ -18,7 +19,9 @@ typedef enum {
     SCENE_CODEX,
     SCENE_STATS,
     SCENE_CREDITS,
-    SCENE__COUNT
+    SCENE_LOADING,
+    SCENE_SELECT_PLANT,   
+    SCENE__COUNT          
 } SceneID;
 
 #endif

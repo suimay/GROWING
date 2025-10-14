@@ -62,6 +62,13 @@ static void handle(SDL_Event* e)
     if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT) {
         scene_switch(SCENE_MAINMENU);
     }
+    if (e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_DOWN) {
+        scroll_speed = 120.0f;
+    }
+    if (e->type == SDL_KEYUP && e->key.keysym.sym == SDLK_DOWN) {
+        scroll_speed = 30.0f;
+    }
+
 }
 
 static void update(float dt)
@@ -75,15 +82,15 @@ static void update(float dt)
     }
 
     scroll_y -= scroll_speed * dt;
-    if (scroll_y < -600) { // 화면 다 올라가면 자동 복귀
-        scene_switch(SCENE_MAINMENU);
+    if (scroll_y < -1100) { // 화면 다 올라가면 자동 복귀
+        scene_switch_fade(SCENE_MAINMENU,0.35f,0.6f);
     }
 }
 
 static void render(SDL_Renderer* r)
 {
     SDL_SetRenderDrawColor(r, 10, 15, 25, 255);
-    SDL_RenderClear(r);
+   
 
     if (!G_FontMain) return;
 
@@ -113,7 +120,7 @@ static void render(SDL_Renderer* r)
         SDL_RenderFillRect(r, &full);
     }
 
-    SDL_RenderPresent(r);
+    
 
    
 }

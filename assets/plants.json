@@ -1,0 +1,42 @@
+[
+  {
+    "id": "succulent",
+    "name_kr": "다육식물",
+    "latin": "Succulents",
+    "light_level": 2,
+    "water_days": 10,
+    "min_temp": 5,
+    "max_temp": 35,
+    "icon": "assets/images/plant_succulent.png"
+  },
+  {
+    "id": "monstera",
+    "name_kr": "몬스테라",
+    "latin": "Monstera deliciosa",
+    "light_level": 1,
+    "water_days": 7,
+    "min_temp": 15,
+    "max_temp": 30,
+    "icon": "assets/images/plant_monstera.png"
+  },
+  {
+    "id": "basil",
+    "name_kr": "바질",
+    "latin": "Ocimum basilicum",
+    "light_level": 2,
+    "water_days": 3,
+    "min_temp": 10,
+    "max_temp": 30,
+    "icon": "assets/images/plant_basil.png"
+  },
+  {
+    "id": "under the moon",
+    "name_kr": "월하미인",
+    "latin": "Epiphyllum oxypetalum",
+    "light_level": 1,
+    "water_days": 1,
+    "min_temp": 1,
+    "max_temp": 3,
+    "icon": "assets/images/plant_Epiphyllum oxypetalum.png"
+  }
+]
