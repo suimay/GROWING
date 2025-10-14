@@ -25,7 +25,7 @@ static void layout(void) {
     int bw = (int)(w * 0.33f), bh = 56, gap = 18;
     int total = 5 * bh + 4 * gap;
     int x = (w - bw) / 2, y = (h - total) / 2 + h / 20;
-    
+
 
     const char* labels[BTN_COUNT] = { "시작","이어하기","도감","설정","크레딧","종료" };
     UIButtonOnClick funcs[BTN_COUNT] = { on_start,on_continue,on_codex,on_settings,on_credits,on_exit };
@@ -39,8 +39,8 @@ static void layout(void) {
 
 }
 
-static void init(void) { 
-    layout(); 
+static void init(void) {
+    layout();
     int want = IMG_INIT_PNG;
     if ((IMG_Init(want) & want) != want) {
         SDL_Log("IMG_Init: %s", IMG_GetError());
@@ -77,13 +77,13 @@ static void handle(SDL_Event* e) {
     if (e->type == SDL_WINDOWEVENT && e->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) layout();
     for (int i = 0;i < BTN_COUNT;i++) ui_button_handle(&s_buttons[i], e);
 
-    
+
 }
 static void update(float dt) { (void)dt; }
 static void render(SDL_Renderer* r) {
     // 0) 매 프레임 시작할 때만 Clear
     SDL_SetRenderDrawColor(r, 16, 20, 28, 255);
-    
+
 
     // 1) 배경
     if (s_bg) {
@@ -150,13 +150,13 @@ static void render(SDL_Renderer* r) {
     for (int i = 0; i < BTN_COUNT; i++) {
         ui_button_render(r, G_FontMain, &s_buttons[i]);
     }
-   
+
 }
 
 static void cleanup(void) {
     if (s_bg) { SDL_DestroyTexture(s_bg); s_bg = NULL; }
     if (s_titleFont) { TTF_CloseFont(s_titleFont); s_titleFont = NULL; }
-    }
+}
 
 static Scene SCENE_OBJ = { init, handle, update, render, cleanup, "MainMenu" };
 Scene* scene_mainmenu_object(void) { return &SCENE_OBJ; }
