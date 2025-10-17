@@ -107,8 +107,8 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\kimgi\source\repos\GROWING\SDL2\vcpkg\installed\x64-windows\include</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalModuleDependencies>C:\Users\kimgi\source\repos\GROWING\SDL2\vcpkg\installed\x64-windows\lib;C:\Users\kimgi\source\repos\GROWING\SDL2\vcpkg\installed\x64-windows\debug\lib</AdditionalModuleDependencies>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -128,6 +128,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,8 +138,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="core\plant_db.c" />
+    <ClCompile Include="core\save.c" />
     <ClCompile Include="game.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="scenes\scene_codex.c" />
     <ClCompile Include="scenes\scene_credits.c" />
     <ClCompile Include="scenes\scene_game.c" />
     <ClCompile Include="scenes\scene_loading.c" />
@@ -148,6 +151,7 @@
     <ClCompile Include="scene_manager.c" />
     <ClCompile Include="ui\ui_button.c" />
     <ClCompile Include="ui\ui_progressbar.c" />
+    <ClCompile Include="utils\settings.c" />
     <ClCompile Include="utils\timer.c" />
   </ItemGroup>
   <ItemGroup>
@@ -155,7 +159,9 @@
     <ClInclude Include="include\common.h" />
     <ClInclude Include="include\core.h" />
     <ClInclude Include="include\loading.h" />
+    <ClInclude Include="include\save.h" />
     <ClInclude Include="include\scene.h" />
+    <ClInclude Include="include\settings.h" />
     <ClInclude Include="include\ui.h" />
     <ClInclude Include="include\utils.h" />
     <ClInclude Include="scene_manager.h" />

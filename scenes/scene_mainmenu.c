@@ -2,14 +2,14 @@
 #include "../scene_manager.h"
 #include "../game.h"
 #include "../include/ui.h"
-
+#include "../include/loading.h"
 #define BTN_COUNT 6
 
 static UIButton s_buttons[BTN_COUNT];
 static Mix_Chunk* sfx_click = NULL;
 static Mix_Chunk* sfx_hover = NULL;
 
-static void on_start(void* ud) { (void)ud; scene_switch(SCENE_SELECT_PLANT); }
+static void on_start(void* ud) { (void)ud; loading_begin(SCENE_SELECT_PLANT,); }
 
 static void on_continue(void* ud) { (void)ud; scene_switch(SCENE_GAMEPLAY); }
 static void on_codex(void* ud) { (void)ud; scene_switch(SCENE_CODEX); }

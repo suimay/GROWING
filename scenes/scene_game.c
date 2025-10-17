@@ -4,6 +4,7 @@
 #include "../game.h"
 #include "../include/ui.h"
 #include "../include/core.h"   // PlantInfo, plantdb_get
+#include "../include/save.h"
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -21,8 +22,35 @@ static SDL_Texture* make_text(SDL_Renderer* r, TTF_Font* f, const char* s, SDL_C
     return tex;
 }
 // ---- 콜백 ----
+static void on_water(void* ud) {
+    (void)ud;
+    s_waterCount++;
+    // 예: 120ml 고정 테스트
+    if (s_plant) log_water(s_plant->id, 120);
+}
+
+
+
+// 성장 단계 전환(예: 일정 경험치/일수 도달 시)
+static void go_next_stage(const char* nextStageName) {
+    if (s_plant) {
+        log_stage(s_plant->id, nextStageName);
+        // 최종 단계라면 도감 해금
+        if (SDL_strcmp(nextStageName, "Final") == 0) {
+            save_mark_plant_completed(s_plant->id);
+        }
+    }
+}
+
+// 햇빛 제공 기록 (너 로직에 맞게 호출)
+static void grant_sun_minutes(int minutes, int ppfd) {
+    if (s_plant) log_sun(s_plant->id, minutes, ppfd);
+}
+
+
 static void on_back(void* ud) { (void)ud; scene_switch(SCENE_MAINMENU); }
-static void on_water(void* ud) { (void)ud; s_waterCount++; SDL_Log("[GAME] water++ -> %d", s_waterCount); }
+
+//창문 토글
 static void on_window(void* ud) {
     (void)ud; 
     s_windowoc = !s_windowoc;
@@ -31,6 +59,7 @@ static void on_window(void* ud) {
     ui_button_set_callback(&s_btnWindow, on_window, NULL);  
     ui_button_set_sfx(&s_btnWindow, G_SFX_Click, NULL);      
     SDL_Log(s_windowoc ? "[GAME] window open." : "[GAME] window close.");
+    if (s_plant) log_window(s_plant->id, s_windowoc);
             
 }
 
