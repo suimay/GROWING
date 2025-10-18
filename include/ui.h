@@ -16,6 +16,8 @@ typedef struct {
 
     UIButtonOnClick on_click;
     void* userdata;
+
+    SDL_Texture* bg_texture;
 } UIButton;
 
 typedef struct {
@@ -37,6 +39,6 @@ void ui_button_set_callback(UIButton* b, UIButtonOnClick fn, void* userdata);
 void ui_button_set_sfx(UIButton* b, Mix_Chunk* clickSfx, Mix_Chunk* hoverSfx);
 
 void ui_button_handle(UIButton* b, const SDL_Event* e);
-void ui_button_render(SDL_Renderer* ren, TTF_Font* font, const UIButton* b);
+void ui_button_render(SDL_Renderer* ren, TTF_Font* font, const UIButton* b, SDL_Texture* bg);
 
 #endif

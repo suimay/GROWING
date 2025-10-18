@@ -159,9 +159,9 @@ static void render(SDL_Renderer* r) {
     }
 
     // 버튼
-    ui_button_render(r, G_FontMain, &s_btnBack);
-    ui_button_render(r, G_FontMain, &s_btnWater);
-    ui_button_render(r, G_FontMain, &s_btnWindow);
+    ui_button_render(r, G_FontMain, &s_btnBack,NULL);
+    ui_button_render(r, G_FontMain, &s_btnWater,NULL);
+    ui_button_render(r, G_FontMain, &s_btnWindow, NULL);
 
     // (향후) 식물 스프라이트, 게이지 등은 여기 추가
 }

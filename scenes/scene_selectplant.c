@@ -9,7 +9,9 @@ static int s_rows = 0, s_cols = MAX_COL;
 static int s_topIndex = 0;      // 스크롤용
 static Mix_Chunk* sfx_click = NULL;
 static UIButton s_btnBack;
-
+static SDL_Texture* select_background = NULL;
+static SDL_Texture* i_back = NULL;
+static SDL_Texture* start_grid = NULL;
 static void on_back(void* ud) { (void)ud; scene_switch(SCENE_MAINMENU); }
 
 static void choose_plant(int idx) {
@@ -26,12 +28,27 @@ static void init(void) {
     if (n <= 0) SDL_Log("WARNING: plants.json empty or fail");
 
     int w, h; SDL_GetRendererOutputSize(G_Renderer, &w, &h);
-    ui_button_init(&s_btnBack, (SDL_Rect) { 20, 20, 120, 44 }, "← 뒤로");
+    ui_button_init(&s_btnBack, (SDL_Rect) { 50, 40, 70, 70 }, "");
     ui_button_set_callback(&s_btnBack, on_back, NULL);
     ui_button_set_sfx(&s_btnBack, sfx_click, NULL);
 
     s_rows = (n + s_cols - 1) / s_cols;
     s_topIndex = 0;
+
+    select_background = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "select_Background.png");
+    if (!select_background) {
+        SDL_Log("Load select_Background.png failed: %s", IMG_GetError());
+    }
+
+    i_back = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "I_back.png");
+    if (!i_back) {
+        SDL_Log("Losd I_back.png failed: %s", IMG_GetError());
+    }
+
+    start_grid = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "start_grid.png");
+    if (!i_back) {
+        SDL_Log("Losd start_grid.png failed: %s", IMG_GetError());
+    }
 }
 
 static void handle(SDL_Event* e) {
@@ -73,7 +90,22 @@ static void update(float dt) { (void)dt; }
 static void render(SDL_Renderer* r) {
     SDL_SetRenderDrawColor(r, 16, 20, 28, 255);
     
-
+    if (select_background) {
+        int w, h; SDL_GetRendererOutputSize(r, &w, &h);
+        SDL_Rect dst = { 0,0,w,h };
+        SDL_RenderCopy(r, select_background, NULL, &dst);
+    }
+    else {
+        int w, h; SDL_GetRendererOutputSize(r, &w, &h);
+        for (int y = 0; y < h; ++y) {
+            float t = (float)y / (float)h;
+            Uint8 R = (Uint8)(16 + t * 20);
+            Uint8 G = (Uint8)(20 + t * 60);
+            Uint8 B = (Uint8)(28 + t * 40);
+            SDL_SetRenderDrawColor(r, R, G, B, 255);
+            SDL_RenderDrawLine(r, 0, y, w, y);
+        }
+    }
     // 타이틀
     if (G_FontMain) {
         SDL_Color c = { 230,240,235,255 };
@@ -89,8 +121,12 @@ static void render(SDL_Renderer* r) {
     }
 
     // 그리드
+    SDL_Rect dst = { 280,100 , 268 * 5, 187 * 5 };
+    SDL_Rect grid = { 0,0 , 268 , 187 };
+    SDL_RenderCopy(r, start_grid, &grid, &dst);
+
     int w, h; SDL_GetRendererOutputSize(r, &w, &h);
-    int gridX = 160, gridY = 100, cellW = (w - 200) / s_cols, cellH = 100, pad = 12;
+    int gridX = 160, gridY = 100, cellW = (w - 500) / s_cols, cellH = 100, pad = 12;
 
     for (int rrow = 0; rrow < 6; rrow++) {
         for (int c = 0;c < s_cols;c++) {
@@ -101,10 +137,12 @@ static void render(SDL_Renderer* r) {
             SDL_Rect cell = { gridX + c * (cellW + pad), gridY + rrow * (cellH + pad), cellW, cellH };
 
             // 카드 배경
+
             SDL_SetRenderDrawColor(r, 40, 60, 95, 255);
             SDL_RenderFillRect(r, &cell);
             SDL_SetRenderDrawColor(r, 255, 255, 255, 100);
             SDL_RenderDrawRect(r, &cell);
+            /*
 
             // 텍스트(이름 / 라틴명)
             if (G_FontMain) {
@@ -129,11 +167,12 @@ static void render(SDL_Renderer* r) {
                     SDL_DestroyTexture(t2); SDL_FreeSurface(s2);
                 }
             }
+            */
         }
     }
 
     // 뒤로 버튼
-    ui_button_render(r, G_FontMain, &s_btnBack);
+    ui_button_render(r, G_FontMain, &s_btnBack, i_back);
 }
 
 static void cleanup(void) {

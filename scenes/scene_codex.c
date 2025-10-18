@@ -158,7 +158,7 @@ static void render(SDL_Renderer* r) {
 
 	//배경
 	SDL_SetRenderDrawColor(r, 16, 20, 28, 255);
-	SDL_RenderClear(r);
+	
 
 	//타이틀
 	draw_text(r, s_font, 36, 26, "도감", (SDL_Color) { 230, 240, 235, 255 });
@@ -256,7 +256,7 @@ static void render(SDL_Renderer* r) {
 			}
 		}
 	}
-	SDL_RenderPresent(r);
+	
 
 }
 

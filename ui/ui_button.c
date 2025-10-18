@@ -50,21 +50,20 @@ void ui_button_handle(UIButton* b, const SDL_Event* e) {
         b->pressed = 0;
     }
 }
-
-void ui_button_render(SDL_Renderer* ren, TTF_Font* font, const UIButton* b) {
-    SDL_Color fill = b->hovered
-        ? (SDL_Color) { 70, 140, 255, 255 }
-    : (SDL_Color) { 50, 90, 170, 255 };
-    if (!b->enabled) fill = (SDL_Color){ 90,90,90,255 };
-    if (b->pressed)  fill = (SDL_Color){ fill.r - 20 < 0 ? 0 : fill.r - 20, fill.g - 20 < 0 ? 0 : fill.g - 20, fill.b - 20 < 0 ? 0 : fill.b - 20, 255 };
-
-    // 배경/테두리
-    SDL_SetRenderDrawColor(ren, fill.r, fill.g, fill.b, fill.a);
-    SDL_RenderFillRect(ren, &b->r);
-    SDL_SetRenderDrawColor(ren, 255, 255, 255, 180);
-    SDL_RenderDrawRect(ren, &b->r);
+void ui_button_render(SDL_Renderer* ren, TTF_Font* font, UIButton* b , SDL_Texture* bg)
+{
+    if (bg) {
+        // 배경 이미지가 주어졌으면 이미지 렌더링
+        SDL_RenderCopy(ren, bg, NULL, &b->r);
+    }
+    else {
+        // 아니면 기본 색상 박스
+        SDL_SetRenderDrawColor(ren, 80, 80, 80, 255);
+        SDL_RenderFillRect(ren, &b->r);
+    }
 
     // 텍스트
+    /*
     if (font && b->text) {
         SDL_Color fg = { 230,230,230,255 };
         SDL_Surface* s = TTF_RenderUTF8_Blended(font, b->text, fg);
@@ -77,4 +76,21 @@ void ui_button_render(SDL_Renderer* ren, TTF_Font* font, const UIButton* b) {
             SDL_FreeSurface(s);
         }
     }
+    */
+
+    if (font && b->text && *b->text) {
+        SDL_Color c = { 255, 255, 255, 255 };
+        SDL_Surface* s = TTF_RenderUTF8_Blended(font, b->text, c);
+        SDL_Texture* t = SDL_CreateTextureFromSurface(ren, s);
+        int tw, th; SDL_QueryTexture(t, NULL, NULL, &tw, &th);
+        SDL_Rect dst = {
+            b->r.x + (b->r.w - tw) / 2,
+            b->r.y + (b->r.h - th) / 2,
+            tw, th
+        };
+        SDL_RenderCopy(ren, t, NULL, &dst);
+        SDL_FreeSurface(s);
+        SDL_DestroyTexture(t);
+    }
 }
+

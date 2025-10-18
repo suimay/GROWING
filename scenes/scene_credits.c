@@ -22,6 +22,7 @@ static CreditLine lines[] = {
     {"Art & Design"},
     {"김기태, 이수인"},
     {"SDL2 UI / Plant Concept"},
+    {"이수인"},
     {" "},
     {"Music"},
     {"Main Theme: 'Morning twilight' 김기태"},
@@ -62,7 +63,7 @@ static void handle(SDL_Event* e)
     if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT) {
         scene_switch(SCENE_MAINMENU);
     }
-    if (e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_DOWN) {
+    if ((e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_DOWN) || e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_SPACE) {
         scroll_speed = 120.0f;
     }
     if (e->type == SDL_KEYUP && e->key.keysym.sym == SDLK_DOWN) {

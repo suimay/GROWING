@@ -9,29 +9,47 @@ static UIButton s_buttons[BTN_COUNT];
 static Mix_Chunk* sfx_click = NULL;
 static Mix_Chunk* sfx_hover = NULL;
 
-static void on_start(void* ud) { (void)ud; loading_begin(SCENE_SELECT_PLANT,); }
+static void on_start(void* ud) { (void)ud; scene_switch_fade(SCENE_SELECT_PLANT,0.2f,0.4f); }
 
-static void on_continue(void* ud) { (void)ud; scene_switch(SCENE_GAMEPLAY); }
-static void on_codex(void* ud) { (void)ud; scene_switch(SCENE_CODEX); }
+static void on_continue(void* ud) { (void)ud; scene_switch_fade(SCENE_GAMEPLAY,0.2f,0.4f); }
+static void on_codex(void* ud) { (void)ud; scene_switch_fade(SCENE_CODEX, 0.2f, 0.4f); }
 static void on_settings(void* ud) { (void)ud; scene_switch(SCENE_SETTINGS); }
 static void on_credits(void* ud) { (void)ud; scene_switch_fade(SCENE_CREDITS, 0.2f, 0.4f); }
 static void on_exit(void* ud) { (void)ud; G_Running = 0; }
+
 static SDL_Texture* s_bg = NULL;
+static SDL_Texture* s_title = NULL;
+static SDL_Texture* s_btn = NULL;
+static SDL_Texture* s_play = NULL;
+static SDL_Texture* s_continue = NULL;
+static SDL_Texture* s_settings = NULL;
+static SDL_Texture* s_credits = NULL;
+static SDL_Texture* s_quit = NULL;
+static SDL_Texture* s_collection = NULL;
+
+UIButton btn_play;
+
 static TTF_Font* s_titleFont = NULL;
+
+SDL_Texture* s_button_img[6];
+
 
 
 static void layout(void) {
     int w, h; SDL_GetRendererOutputSize(G_Renderer, &w, &h);
-    int bw = (int)(w * 0.33f), bh = 56, gap = 18;
+    int bw = (int)(w * 0.25f), bh = 78, gap = 20;
     int total = 5 * bh + 4 * gap;
-    int x = (w - bw) / 2, y = (h - total) / 2 + h / 20;
+    int x = (w - bw) / 2, y = ((h - total) / 2 + h / 20) + 20;
 
 
-    const char* labels[BTN_COUNT] = { "시작","이어하기","도감","설정","크레딧","종료" };
+    //const char* labels[BTN_COUNT] = {"시작", "이어하기","도감","설정","크레딧","종료" };
     UIButtonOnClick funcs[BTN_COUNT] = { on_start,on_continue,on_codex,on_settings,on_credits,on_exit };
 
+
+    
     for (int i = 0;i < BTN_COUNT;i++) {
-        ui_button_init(&s_buttons[i], (SDL_Rect) { x, y + i * (bh + gap), bw, bh }, labels[i]);
+        ui_button_init(&s_buttons[i], (SDL_Rect) { x, y + i * (bh + gap), bw, bh }, NULL);
+        
         ui_button_set_callback(&s_buttons[i], funcs[i], NULL);
         ui_button_set_sfx(&s_buttons[i], sfx_click, sfx_hover);
     }
@@ -48,6 +66,45 @@ static void init(void) {
     s_bg = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "bg_title.jpg");
     if (!s_bg) {
         SDL_Log("Load bg_title.png failed: %s", IMG_GetError());
+    }
+
+    s_play = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_start.png");
+    if (!s_play) {
+        SDL_Log("Load btn_play.png failed: %s", IMG_GetError());
+    }
+
+    s_continue = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_continue.png");
+    if (!s_continue) {
+        SDL_Log("Load btn_continue.png failed: %s", IMG_GetError());
+    }
+    s_collection = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_collection.png");
+    if (!s_collection) {
+        SDL_Log("Load btn_collection.png failed: %s", IMG_GetError());
+    }
+    s_settings = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_setting.png");
+    if (!s_settings) {
+        SDL_Log("Load btn_settings.png failed: %s", IMG_GetError());
+    }
+    s_credits = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_credit.png");
+    if (!s_credits) {
+        SDL_Log("Load btn_credits.png failed: %s", IMG_GetError());
+    }
+    s_quit = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_quit.png");
+    if (!s_quit) {
+        SDL_Log("Load btn_quit.png failed: %s", IMG_GetError());
+    }
+
+    s_button_img[0] = s_play;
+    s_button_img[1] = s_continue;
+    s_button_img[2] = s_collection;
+    s_button_img[3] = s_settings;
+    s_button_img[4] = s_credits;
+    s_button_img[5] = s_quit;
+
+
+    s_title = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "title.png");
+    if (!s_title) {
+        SDL_Log("Load title.png failed: %s", IMG_GetError());
     }
 
     s_titleFont = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 48);
@@ -107,16 +164,21 @@ static void render(SDL_Renderer* r) {
     const char* title = "GROWING";
     TTF_Font* titleFont = s_titleFont ? s_titleFont : G_FontMain;
     if (titleFont) {
-        int w, h; SDL_GetRendererOutputSize(r, &w, &h);
+        int w, h; 
+        SDL_GetRendererOutputSize(r, &w, &h);
         SDL_Color shadow = { 0, 0, 0, 160 };
         SDL_Color mainC = { 235, 245, 235, 255 };
 
+        SDL_Rect dst = { 0,0,w,h };
+        SDL_RenderCopy(r, s_title, NULL, &dst);
+        /*
         SDL_Surface* s1 = TTF_RenderUTF8_Blended(titleFont, title, shadow);
         SDL_Surface* s2 = TTF_RenderUTF8_Blended(titleFont, title, mainC);
         if (s1 && s2) {
             SDL_Texture* t1 = SDL_CreateTextureFromSurface(r, s1);
             SDL_Texture* t2 = SDL_CreateTextureFromSurface(r, s2);
-            int tw, th; SDL_QueryTexture(t2, NULL, NULL, &tw, &th);
+            int tw, th; 
+            SDL_QueryTexture(t2, NULL, NULL, &tw, &th);
 
             SDL_Rect d1 = { (w - tw) / 2 + 2, 40 + 2, tw, th };
             SDL_Rect d2 = { (w - tw) / 2,     40,     tw, th };
@@ -129,11 +191,12 @@ static void render(SDL_Renderer* r) {
         }
         if (s1) SDL_FreeSurface(s1);
         if (s2) SDL_FreeSurface(s2);
+        */
     }
 
     // 3) 서브 타이틀
     if (G_FontMain) {
-        SDL_Color subC = { 210, 230, 220, 220 };
+        SDL_Color subC = { 210, 230, 220, 255 };
         SDL_Surface* s = TTF_RenderUTF8_Blended(G_FontMain, "날씨 기반 반려식물 시뮬레이터", subC);
         if (s) {
             SDL_Texture* t = SDL_CreateTextureFromSurface(r, s);
@@ -148,8 +211,9 @@ static void render(SDL_Renderer* r) {
 
     // 4) 버튼
     for (int i = 0; i < BTN_COUNT; i++) {
-        ui_button_render(r, G_FontMain, &s_buttons[i]);
+        ui_button_render(r, G_FontMain, &s_buttons[i],s_button_img[i]);
     }
+    
 
 }
 
