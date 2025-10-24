@@ -1,42 +1,272 @@
 [
   {
-    "id": "succulent",
-    "name_kr": "다육식물",
-    "latin": "Succulents",
+    "id": "areca_palm",
+    "name_kr": "아레카야자",
+    "latin": "Dypsis lutescens",
     "light_level": 2,
-    "water_days": 10,
-    "min_temp": 5,
+    "water_days": 5,
+    "min_temp": 18,
     "max_temp": 35,
-    "icon": "assets/images/plant_succulent.png"
+    "icon": "assets/images/plant_areca_palm.png"
+  },
+  {
+    "id": "anthurium",
+    "name_kr": "안스리움",
+    "latin": "Anthurium andraeanum",
+    "light_level": 1,
+    "water_days": 4,
+    "min_temp": 18,
+    "max_temp": 30,
+    "icon": "assets/images/plant_anthurium.png"
+  },
+  {
+    "id": "calathea_orbifolia",
+    "name_kr": "칼라데아 오르비폴리아",
+    "latin": "Calathea orbifolia",
+    "light_level": 0,
+    "water_days": 3,
+    "min_temp": 18,
+    "max_temp": 30,
+    "icon": "assets/images/plant_calathea_orbifolia.png"
   },
   {
     "id": "monstera",
     "name_kr": "몬스테라",
     "latin": "Monstera deliciosa",
-    "light_level": 1,
+    "light_level": 2,
     "water_days": 7,
     "min_temp": 15,
     "max_temp": 30,
     "icon": "assets/images/plant_monstera.png"
   },
   {
-    "id": "basil",
-    "name_kr": "바질",
-    "latin": "Ocimum basilicum",
-    "light_level": 2,
-    "water_days": 3,
-    "min_temp": 10,
-    "max_temp": 30,
-    "icon": "assets/images/plant_basil.png"
+    "id": "tillandsia",
+    "name_kr": "틸란드시아",
+    "latin": "Tillandsia",
+    "light_level": 1,
+    "water_days": 2,
+    "min_temp": 18,
+    "max_temp": 32,
+    "icon": "assets/images/plant_tillandsia.png"
   },
   {
-    "id": "under the moon",
-    "name_kr": "월하미인",
-    "latin": "Epiphyllum oxypetalum",
+    "id": "aloe_vera",
+    "name_kr": "알로에 베라",
+    "latin": "Aloe vera",
+    "light_level": 0,
+    "water_days": 10,
+    "min_temp": 10,
+    "max_temp": 35,
+    "icon": "assets/images/plant_aloe_vera.png"
+  },
+  {
+    "id": "eucalyptus",
+    "name_kr": "유칼립투스",
+    "latin": "Eucalyptus globulus",
+    "light_level": 2,
+    "water_days": 6,
+    "min_temp": 10,
+    "max_temp": 35,
+    "icon": "assets/images/plant_eucalyptus.png"
+  },
+  {
+    "id": "geranium",
+    "name_kr": "제라늄",
+    "latin": "Pelargonium",
     "light_level": 1,
-    "water_days": 1,
-    "min_temp": 1,
-    "max_temp": 3,
-    "icon": "assets/images/plant_Epiphyllum oxypetalum.png"
+    "water_days": 7,
+    "min_temp": 10,
+    "max_temp": 30,
+    "icon": "assets/images/plant_geranium.png"
+  },
+  {
+    "id": "birdsnest_fern",
+    "name_kr": "지네고사리",
+    "latin": "Asplenium nidus",
+    "light_level": 0,
+    "water_days": 4,
+    "min_temp": 15,
+    "max_temp": 30,
+    "icon": "assets/images/plant_birdsnest_fern.png"
+  },
+  {
+    "id": "rubber_tree",
+    "name_kr": "인도고무나무",
+    "latin": "Ficus elastica",
+    "light_level": 2,
+    "water_days": 6,
+    "min_temp": 15,
+    "max_temp": 32,
+    "icon": "assets/images/plant_rubber_tree.png"
+  },
+  {
+    "id": "snake_plant",
+    "name_kr": "스투키",
+    "latin": "Sansevieria trifasciata",
+    "light_level": 1,
+    "water_days": 10,
+    "min_temp": 10,
+    "max_temp": 35,
+    "icon": "assets/images/plant_snake_plant.png"
+  },
+  {
+    "id": "calathea_makoyana",
+    "name_kr": "칼라데아 마코야나",
+    "latin": "Calathea makoyana",
+    "light_level": 0,
+    "water_days": 3,
+    "min_temp": 18,
+    "max_temp": 28,
+    "icon": "assets/images/plant_calathea_makoyana.png"
+  },
+  {
+    "id": "scindapsus",
+    "name_kr": "스킨답서스",
+    "latin": "Scindapsus pictus",
+    "light_level": 2,
+    "water_days": 7,
+    "min_temp": 15,
+    "max_temp": 30,
+    "icon": "assets/images/plant_scindapsus.png"
+  },
+  {
+    "id": "ivy",
+    "name_kr": "아이비",
+    "latin": "Hedera helix",
+    "light_level": 1,
+    "water_days": 6,
+    "min_temp": 5,
+    "max_temp": 25,
+    "icon": "assets/images/plant_ivy.png"
+  },
+  {
+    "id": "table_palm",
+    "name_kr": "테이블야자",
+    "latin": "Chamaedorea elegans",
+    "light_level": 0,
+    "water_days": 5,
+    "min_temp": 10,
+    "max_temp": 28,
+    "icon": "assets/images/plant_table_palm.png"
+  },
+  {
+    "id": "agave",
+    "name_kr": "용설란",
+    "latin": "Agave americana",
+    "light_level": 2,
+    "water_days": 12,
+    "min_temp": 10,
+    "max_temp": 35,
+    "icon": "assets/images/plant_agave.png"
+  },
+  {
+    "id": "crown_of_thorns",
+    "name_kr": "꽃기린",
+    "latin": "Euphorbia milii",
+    "light_level": 1,
+    "water_days": 8,
+    "min_temp": 15,
+    "max_temp": 35,
+    "icon": "assets/images/plant_crown_of_thorns.png"
+  },
+  {
+    "id": "jelly_bean",
+    "name_kr": "젤리빈",
+    "latin": "Sedum rubrotinctum",
+    "light_level": 0,
+    "water_days": 9,
+    "min_temp": 10,
+    "max_temp": 30,
+    "icon": "assets/images/plant_jelly_bean.png"
+  },
+  {
+    "id": "sansevieria_moonlight",
+    "name_kr": "산세베리아 문라이크",
+    "latin": "Sansevieria trifasciata ‘Moonshine’",
+    "light_level": 2,
+    "water_days": 10,
+    "min_temp": 5,
+    "max_temp": 30,
+    "icon": "assets/images/plant_sansevieria_moonlight.png"
+  },
+  {
+    "id": "hoya",
+    "name_kr": "호야",
+    "latin": "Hoya carnosa",
+    "light_level": 1,
+    "water_days": 7,
+    "min_temp": 5,
+    "max_temp": 25,
+    "icon": "assets/images/plant_hoya.png"
+  },
+  {
+    "id": "aglaonema_silver_queen",
+    "name_kr": "아글라오네마 실버퀸",
+    "latin": "Aglaonema ‘Silver Queen’",
+    "light_level": 0,
+    "water_days": 6,
+    "min_temp": 10,
+    "max_temp": 25,
+    "icon": "assets/images/plant_aglaonema_silver_queen.png"
+  },
+  {
+    "id": "peperomia_obtusifolia",
+    "name_kr": "청페페",
+    "latin": "Peperomia obtusifolia",
+    "light_level": 2,
+    "water_days": 6,
+    "min_temp": 5,
+    "max_temp": 25,
+    "icon": "assets/images/plant_peperomia_obtusifolia.png"
+  },
+  {
+    "id": "peppermint_geranium",
+    "name_kr": "페퍼민트 제라늄",
+    "latin": "Pelargonium tomentosum",
+    "light_level": 1,
+    "water_days": 7,
+    "min_temp": 5,
+    "max_temp": 25,
+    "icon": "assets/images/plant_peppermint_geranium.png"
+  },
+  {
+    "id": "philodendron",
+    "name_kr": "필로데드론",
+    "latin": "Philodendron hederaceum",
+    "light_level": 0,
+    "water_days": 6,
+    "min_temp": 5,
+    "max_temp": 25,
+    "icon": "assets/images/plant_philodendron.png"
+  },
+  {
+    "id": "rosemary",
+    "name_kr": "로즈마리",
+    "latin": "Rosmarinus officinalis",
+    "light_level": 2,
+    "water_days": 10,
+    "min_temp": 5,
+    "max_temp": 25,
+    "icon": "assets/images/plant_rosemary.png"
+  },
+  {
+    "id": "haworthia",
+    "name_kr": "하월시아",
+    "latin": "Haworthia cooperi",
+    "light_level": 1,
+    "water_days": 10,
+    "min_temp": 5,
+    "max_temp": 25,
+    "icon": "assets/images/plant_haworthia.png"
+  },
+  {
+    "id": "hoya_compacta",
+    "name_kr": "호야 콤팩타",
+    "latin": "Hoya compacta",
+    "light_level": 0,
+    "water_days": 8,
+    "min_temp": 5,
+    "max_temp": 25,
+    "icon": "assets/images/plant_hoya_compacta.png"
   }
 ]
