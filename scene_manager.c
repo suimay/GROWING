@@ -3,6 +3,7 @@
 
 Scene* G_Scenes[SCENE__COUNT] = { 0 };
 SceneID G_CurrentScene = SCENE_MAINMENU;
+static void* g_pendingArg = NULL;
 
 void scene_register(SceneID id, Scene* sc) {
     if (id < 0 || id >= SCENE__COUNT) {
@@ -27,11 +28,18 @@ static void do_switch(SceneID id) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "[SCENE] id=%d not registered", id);
         return;
     }
+    void* arg = g_pendingArg;
+    g_pendingArg = NULL;
     if (G_Scenes[id]->init)
-        G_Scenes[id]->init();
+        G_Scenes[id]->init(arg);
 }
 
 void scene_switch(SceneID id) {
+    scene_switch_arg(id, NULL);
+}
+
+void scene_switch_arg(SceneID id, void* arg) {
+    g_pendingArg = arg;
     do_switch(id);
 }
 
@@ -41,16 +49,21 @@ static struct {
     int active;
     TrPhase phase;
     SceneID target;
+    void* arg;
     float t;          // 현재 진행 시간
     float out_dur;    // 페이드 아웃 시간
     float in_dur;     // 페이드 인 시간
 } g_tr = { 0 };
 
 void scene_switch_fade(SceneID target, float out_sec, float in_sec) {
-    // 이미 진행 중이면 덮어쓰기(원하면 무시하도록 바꿔도 됨)
+    scene_switch_fade_arg(target, NULL, out_sec, in_sec);
+}
+
+void scene_switch_fade_arg(SceneID target, void* arg, float out_sec, float in_sec) {
     g_tr.active = 1;
     g_tr.phase = TR_OUT;
     g_tr.target = target;
+    g_tr.arg = arg;
     g_tr.t = 0.f;
     g_tr.out_dur = (out_sec <= 0.f) ? 0.001f : out_sec;
     g_tr.in_dur = (in_sec <= 0.f) ? 0.001f : in_sec;
@@ -75,9 +88,11 @@ void scene_update(float dt) {
     case TR_OUT:
         if (g_tr.t >= g_tr.out_dur) {
             // 스위치 타이밍
+            g_pendingArg = g_tr.arg;
             do_switch(g_tr.target);
             g_tr.phase = TR_IN;
             g_tr.t = 0.f;
+            g_tr.arg = NULL;
         }
         break;
     case TR_IN:

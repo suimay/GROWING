@@ -7,8 +7,10 @@ extern SceneID  G_CurrentScene;
 
 void scene_register(SceneID id, Scene* sc);
 void scene_switch(SceneID id);
+void scene_switch_arg(SceneID id, void *arg);
 
 void scene_switch_fade(SceneID target, float out_sec, float in_sec);
+void scene_switch_fade_arg(SceneID target, void *arg, float out_sec, float in_sec);
 
 void scene_handle(SDL_Event* e);
 void scene_update(float dt);

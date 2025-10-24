@@ -3,6 +3,7 @@
 #include "../game.h"
 #include "../include/ui.h"
 #include "../include/core.h"
+#include <stdint.h>
 
 #define MAX_COL 2
 #define GRID_VISIBLE_ROWS 6
@@ -39,7 +40,7 @@ static void choose_plant(int idx)
 {
     G_SelectedPlantIndex = idx;
     SDL_Log("Selected plant idx=%d name=%s", idx, plantdb_get(idx)->name_kr);
-    scene_switch_fade(SCENE_GAMEPLAY, 0.2f, 0.4f);
+    scene_switch_fade_arg(SCENE_PLANTINFO, (void *)(intptr_t)idx, 0.2f, 0.4f);
 }
 
 static void layout_ui(int w, int h)
@@ -143,8 +144,9 @@ static SDL_Rect compute_slot_rect(int localRow, int col, const SDL_Rect *gridDst
     return rect;
 }
 
-static void init(void)
+static void init(void *arg)
 {
+    (void)arg;
     if (!sfx_click)
         sfx_click = Mix_LoadWAV(ASSETS_SOUNDS_DIR "click.wav");
     // JSON 로드

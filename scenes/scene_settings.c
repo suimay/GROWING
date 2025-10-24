@@ -202,8 +202,9 @@ static void draw_slider(SDL_Renderer *r, Slider *s, SDL_Texture *track, SDL_Text
     }
 }
 
-static void settings_init(void)
+static void settings_init(void *arg)
 {
+    (void)arg;
     int w, h;
     SDL_GetRendererOutputSize(G_Renderer, &w, &h);
 

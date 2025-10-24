@@ -263,8 +263,9 @@ static void load_background_animation(void)
     SDL_Log("[MAINMENU] Using fallback frame textures for mainscene animation");
 }
 
-static void init(void)
+static void init(void *arg)
 {
+    (void)arg;
     sfx_click = G_SFX_Click;
     sfx_hover = G_SFX_Hover ? G_SFX_Hover : sfx_click;
 

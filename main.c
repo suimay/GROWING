@@ -12,6 +12,7 @@ Scene *scene_codex_object(void);
 // Scene* scene_stats_object(void);
 Scene *scene_credits_object(void);
 Scene *scene_selectplant_object(void);
+Scene *scene_plantinfo_object(void);
 int main(void)
 {
     if (!game_init())
@@ -30,6 +31,7 @@ int main(void)
     scene_register(SCENE_MAINMENU, scene_mainmenu_object());
     scene_register(SCENE_GAMEPLAY, scene_gameplay_object());
     scene_register(SCENE_SETTINGS, scene_settings_object());
+    scene_register(SCENE_PLANTINFO, scene_plantinfo_object());
     scene_register(SCENE_CODEX, scene_codex_object());
     // scene_register(SCENE_STATS,    scene_stats_object())
     scene_register(SCENE_SELECT_PLANT, scene_selectplant_object());

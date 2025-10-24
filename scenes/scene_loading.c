@@ -39,7 +39,8 @@ static int loading_thread(void* p) {
 }
 
 // -------------------- Scene 콜백들 --------------------
-static void init(void) {
+static void init(void *arg) {
+    (void)arg;
     LD.thread = NULL;
     LD.done = 0;
     LD.timer = 0.f;

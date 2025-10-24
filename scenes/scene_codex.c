@@ -188,8 +188,9 @@ static void layout(int win_w, int win_h)
 }
 
 // 초기화
-static void init(void)
+static void init(void *arg)
 {
+    (void)arg;
     int w, h;
     SDL_GetRendererOutputSize(G_Renderer, &w, &h);
 

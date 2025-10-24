@@ -43,8 +43,9 @@ static CreditLine lines[] = {
     {NULL}
 };
 
-static void init(void)
+static void init(void *arg)
 {
+    (void)arg;
     scroll_y = APP_HEIGHT + 50; // 처음은 아래에서 시작
     fade_alpha = 255.0f;
     fading_in = 1;

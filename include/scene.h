@@ -3,7 +3,7 @@
 #include "common.h"
 
 typedef struct Scene {
-    void (*init)(void);
+    void (*init)(void *arg);
     void (*handle)(SDL_Event*);
     void (*update)(float dt);
     void (*render)(SDL_Renderer*);
@@ -16,6 +16,7 @@ typedef enum {
     SCENE_MAINMENU = 0,
     SCENE_GAMEPLAY,
     SCENE_SETTINGS,
+    SCENE_PLANTINFO,
     SCENE_CODEX,
     SCENE_STATS,
     SCENE_CREDITS,
