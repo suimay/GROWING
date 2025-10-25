@@ -19,6 +19,7 @@ static UIButton btn_bgm_toggle;
 static UIButton btn_sfx_toggle;
 static UIButton btn_test;
 static UIButton btn_back;
+static UIButton btn_save;
 
 static SDL_Texture *s_bg = NULL;
 static SDL_Texture *s_titlebarTex = NULL;
@@ -28,24 +29,21 @@ static SDL_Texture *tex_bgm_track = NULL;
 static SDL_Texture *tex_bgm_handle = NULL;
 static SDL_Texture *tex_sfx_track = NULL;
 static SDL_Texture *tex_sfx_handle = NULL;
+static SDL_Texture *tex_save_icon = NULL;
+static SDL_Texture *tex_music_on = NULL;
+static SDL_Texture *tex_music_off = NULL;
+static SDL_Texture *tex_volume_on = NULL;
+static SDL_Texture *tex_volume_off = NULL;
 
 static int s_titlebarW = 0;
 static int s_titlebarH = 0;
 static SDL_Rect s_panelRect = {0};
+static SDL_Rect s_bgmHeaderRect = {0};
+static SDL_Rect s_sfxHeaderRect = {0};
+static SDL_Rect s_sfxTestRect = {0};
 
 static TTF_Font *s_titleFont = NULL;
 static TTF_Font *font = NULL;
-
-static char s_bgmLabel[32] = "";
-static char s_sfxLabel[32] = "";
-
-static void settings_layout(int w, int h);
-static void settings_render(SDL_Renderer *r);
-
-static void on_toggle_bgm(void *ud);
-static void on_toggle_sfx(void *ud);
-static void on_test_sfx(void *ud);
-static void on_back(void *ud);
 
 static int point_in_rect(int x, int y, SDL_Rect rc)
 {
@@ -70,11 +68,18 @@ static void slider_sync_handle_from_value(Slider *s)
 
 static void update_toggle_labels(void)
 {
-    SDL_snprintf(s_bgmLabel, sizeof(s_bgmLabel), "BGM %s", G_Settings.audio.mute_bgm ? "켜기" : "끄기");
-    SDL_snprintf(s_sfxLabel, sizeof(s_sfxLabel), "효과음 %s", G_Settings.audio.mute_sfx ? "켜기" : "끄기");
-    btn_bgm_toggle.text = s_bgmLabel;
-    btn_sfx_toggle.text = s_sfxLabel;
+    btn_bgm_toggle.text = NULL;
+    btn_sfx_toggle.text = NULL;
 }
+
+static void settings_layout(int w, int h);
+static void settings_render(SDL_Renderer *r);
+static void on_toggle_bgm(void *ud);
+static void on_toggle_sfx(void *ud);
+static void on_test_sfx(void *ud);
+static void on_back(void *ud);
+static void on_save(void *ud);
+
 
 static void settings_layout(int w, int h)
 {
@@ -83,17 +88,9 @@ static void settings_layout(int w, int h)
     if (panelW > 960)
         panelW = 960;
     int panelH = h - (margin * 2 + 80);
-    if (panelH < 420)
-        panelH = 420;
+    if (panelH < 500)
+        panelH = 500;
     s_panelRect = (SDL_Rect){(w - panelW) / 2, margin + 50, panelW, panelH};
-
-    int contentLeft = s_panelRect.x + 100;
-    int contentRight = s_panelRect.x + s_panelRect.w - 100;
-    int trackW = contentRight - contentLeft;
-    if (trackW > 640)
-        trackW = 640;
-    if (trackW < 320)
-        trackW = 320;
 
     int trackBH = 28;
     int handleBW = 40;
@@ -117,12 +114,44 @@ static void settings_layout(int w, int h)
         }
     }
 
-    bgm_slider.bar = (SDL_Rect){contentLeft, s_panelRect.y + 200, trackW, trackBH};
+    int toggleW = 140;
+    int toggleH = 80;
+    if (tex_music_on)
+    {
+        int tw, th;
+        if (SDL_QueryTexture(tex_music_on, NULL, NULL, &tw, &th) == 0 && tw > 0 && th > 0)
+        {
+            toggleW = tw;
+            toggleH = th;
+        }
+    }
+
+    int contentLeft = s_panelRect.x + 80;
+    int sliderX = contentLeft + toggleW + 40;
+    int sliderWidth = s_panelRect.x + s_panelRect.w - sliderX - 140;
+    if (sliderWidth < 320)
+        sliderWidth = 320;
+
+    int bgmCenterY = s_panelRect.y + 220;
+    btn_bgm_toggle.r = (SDL_Rect){contentLeft, bgmCenterY - toggleH / 2, toggleW, toggleH};
+    bgm_slider.bar = (SDL_Rect){sliderX, bgmCenterY - trackBH / 2, sliderWidth, trackBH};
     bgm_slider.handle.w = handleBW;
     bgm_slider.handle.h = handleBH;
     slider_sync_handle_from_value(&bgm_slider);
 
-    int rowGap = 160;
+    int sfxCenterY = bgmCenterY + toggleH + 200;
+    int sfxToggleW = toggleW;
+    int sfxToggleH = toggleH;
+    if (tex_volume_on)
+    {
+        int tw, th;
+        if (SDL_QueryTexture(tex_volume_on, NULL, NULL, &tw, &th) == 0 && tw > 0 && th > 0)
+        {
+            sfxToggleW = tw;
+            sfxToggleH = th;
+        }
+    }
+    btn_sfx_toggle.r = (SDL_Rect){contentLeft, sfxCenterY - sfxToggleH / 2, sfxToggleW, sfxToggleH};
 
     int sfxTrackH = trackBH;
     int sfxHandleW = handleBW;
@@ -144,18 +173,29 @@ static void settings_layout(int w, int h)
                 sfxHandleH = th;
         }
     }
-
-    sfx_slider.bar = (SDL_Rect){contentLeft, bgm_slider.bar.y + rowGap, trackW, sfxTrackH};
+    sfx_slider.bar = (SDL_Rect){sliderX, sfxCenterY - sfxTrackH / 2, sliderWidth, sfxTrackH};
     sfx_slider.handle.w = sfxHandleW;
     sfx_slider.handle.h = sfxHandleH;
     slider_sync_handle_from_value(&sfx_slider);
 
-    int toggleWidth = 200;
-    int toggleHeight = 56;
-    btn_bgm_toggle.r = (SDL_Rect){contentLeft, bgm_slider.bar.y - toggleHeight - 24, toggleWidth, toggleHeight};
-    btn_sfx_toggle.r = (SDL_Rect){contentLeft, sfx_slider.bar.y - toggleHeight - 24, toggleWidth, toggleHeight};
+    int headerHeight = 66;
+    s_bgmHeaderRect = (SDL_Rect){sliderX, bgm_slider.bar.y - headerHeight - 24, sliderWidth, headerHeight};
 
-    btn_test.r = (SDL_Rect){contentLeft, s_panelRect.y + s_panelRect.h - 80, 260, 60};
+    int headerSpacing = 24;
+    int testWidth = 240;
+    if (testWidth > sliderWidth - 120)
+        testWidth = sliderWidth / 2;
+    s_sfxHeaderRect = (SDL_Rect){sliderX, sfx_slider.bar.y - headerHeight - 24, sliderWidth - testWidth - headerSpacing, headerHeight};
+    if (s_sfxHeaderRect.w < 180)
+        s_sfxHeaderRect.w = 180;
+    s_sfxTestRect = (SDL_Rect){s_sfxHeaderRect.x + s_sfxHeaderRect.w + headerSpacing, s_sfxHeaderRect.y, testWidth, headerHeight};
+
+    btn_test.r = s_sfxTestRect;
+
+    int saveSize = 72;
+    int saveX = s_panelRect.x + s_panelRect.w - saveSize - 40;
+    int saveY = s_panelRect.y + s_panelRect.h - saveSize - 30;
+    btn_save.r = (SDL_Rect){saveX, saveY, saveSize, saveSize};
 
     btn_back.r = (SDL_Rect){40, 40, 72, 72};
 }
@@ -259,7 +299,7 @@ static void settings_init(void *arg)
 
     if (!tex_bgm_track)
     {
-        tex_bgm_track = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_music.png");
+        tex_bgm_track = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "Y_musicbar.png");
         if (!tex_bgm_track)
             SDL_Log("Settings BGM track load failed: %s", IMG_GetError());
     }
@@ -273,23 +313,55 @@ static void settings_init(void *arg)
 
     if (!tex_sfx_track)
     {
-        tex_sfx_track = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_click.png");
+        tex_sfx_track = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "Y_volumebar.png");
         if (!tex_sfx_track)
             SDL_Log("Settings SFX track load failed: %s", IMG_GetError());
     }
 
     if (!tex_sfx_handle)
     {
-        tex_sfx_handle = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_clickToggle.png");
+        tex_sfx_handle = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_musicToggle.png");
         if (!tex_sfx_handle)
             SDL_Log("Settings SFX handle load failed: %s", IMG_GetError());
     }
 
-    ui_button_init(&btn_bgm_toggle, (SDL_Rect){0, 0, 0, 0}, s_bgmLabel);
+    if (!tex_save_icon)
+    {
+        tex_save_icon = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "I_check.png");
+        if (!tex_save_icon)
+            SDL_Log("Settings save icon load failed: %s", IMG_GetError());
+    }
+
+    if (!tex_music_on)
+    {
+        tex_music_on = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "Y_musicON.png");
+        if (!tex_music_on)
+            SDL_Log("Settings music ON icon load failed: %s", IMG_GetError());
+    }
+    if (!tex_music_off)
+    {
+        tex_music_off = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "Y_musicOFF.png");
+        if (!tex_music_off)
+            SDL_Log("Settings music OFF icon load failed: %s", IMG_GetError());
+    }
+    if (!tex_volume_on)
+    {
+        tex_volume_on = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "Y_volumeON.png");
+        if (!tex_volume_on)
+            SDL_Log("Settings volume ON icon load failed: %s", IMG_GetError());
+    }
+    if (!tex_volume_off)
+    {
+        tex_volume_off = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "Y_volumeOFF.png");
+        if (!tex_volume_off)
+            SDL_Log("Settings volume OFF icon load failed: %s", IMG_GetError());
+    }
+
+    ui_button_init(&btn_bgm_toggle, (SDL_Rect){0, 0, 0, 0}, NULL);
     ui_button_set_callback(&btn_bgm_toggle, on_toggle_bgm, NULL);
     ui_button_set_sfx(&btn_bgm_toggle, G_SFX_Click, G_SFX_Hover);
 
-    ui_button_init(&btn_sfx_toggle, (SDL_Rect){0, 0, 0, 0}, s_sfxLabel);
+    ui_button_init(&btn_sfx_toggle, (SDL_Rect){0, 0, 0, 0}, NULL);
     ui_button_set_callback(&btn_sfx_toggle, on_toggle_sfx, NULL);
     ui_button_set_sfx(&btn_sfx_toggle, G_SFX_Click, G_SFX_Hover);
 
@@ -300,6 +372,10 @@ static void settings_init(void *arg)
     ui_button_init(&btn_back, (SDL_Rect){0, 0, 0, 0}, "");
     ui_button_set_callback(&btn_back, on_back, NULL);
     ui_button_set_sfx(&btn_back, G_SFX_Click, G_SFX_Hover);
+
+    ui_button_init(&btn_save, (SDL_Rect){0, 0, 0, 0}, "");
+    ui_button_set_callback(&btn_save, on_save, NULL);
+    ui_button_set_sfx(&btn_save, G_SFX_Click, G_SFX_Hover);
 
     update_toggle_labels();
 
@@ -330,6 +406,12 @@ static void on_test_sfx(void *ud)
 }
 
 static void on_back(void *ud)
+{
+    (void)ud;
+    scene_switch(SCENE_MAINMENU);
+}
+
+static void on_save(void *ud)
 {
     (void)ud;
     settings_save();
@@ -412,22 +494,67 @@ static void settings_render(SDL_Renderer *r)
     SDL_Color labelColor = {245, 245, 240, 255};
     SDL_Color valueColor = {222, 204, 178, 255};
 
-    draw_text(r, font ? font : G_FontMain, labelColor, bgm_slider.bar.x, bgm_slider.bar.y - 48, "배경 음악 볼륨");
+    SDL_Rect bgmHeaderRect = s_bgmHeaderRect;
+    SDL_Rect sfxHeaderRect = s_sfxHeaderRect;
+    if (tex_button_basic)
+    {
+        SDL_RenderCopy(r, tex_button_basic, NULL, &bgmHeaderRect);
+        SDL_RenderCopy(r, tex_button_basic, NULL, &sfxHeaderRect);
+    }
+    else
+    {
+        SDL_SetRenderDrawColor(r, 200, 180, 150, 255);
+        SDL_RenderFillRect(r, &bgmHeaderRect);
+        SDL_RenderFillRect(r, &sfxHeaderRect);
+        SDL_SetRenderDrawColor(r, 120, 90, 60, 255);
+        SDL_RenderDrawRect(r, &bgmHeaderRect);
+        SDL_RenderDrawRect(r, &sfxHeaderRect);
+    }
+    draw_text(r, font ? font : G_FontMain, labelColor, bgmHeaderRect.x + 20, bgmHeaderRect.y + bgmHeaderRect.h / 2 - 14, "BGM 설정");
+    draw_text(r, font ? font : G_FontMain, labelColor, sfxHeaderRect.x + 20, sfxHeaderRect.y + sfxHeaderRect.h / 2 - 14, "효과음 설정");
+
     char volBuf[32];
     SDL_snprintf(volBuf, sizeof(volBuf), "%d%%", (int)(bgm_slider.value * 100.f + 0.5f));
-    draw_text(r, font ? font : G_FontMain, valueColor, bgm_slider.bar.x + bgm_slider.bar.w + 20, bgm_slider.bar.y - 10, volBuf);
-
     draw_slider(r, &bgm_slider, tex_bgm_track, tex_bgm_handle);
+    draw_text(r, font ? font : G_FontMain, valueColor, bgm_slider.bar.x + bgm_slider.bar.w + 20, bgm_slider.bar.y + bgm_slider.bar.h / 2 - 12, volBuf);
 
-    draw_text(r, font ? font : G_FontMain, labelColor, sfx_slider.bar.x, sfx_slider.bar.y - 48, "효과음 볼륨");
     SDL_snprintf(volBuf, sizeof(volBuf), "%d%%", (int)(sfx_slider.value * 100.f + 0.5f));
-    draw_text(r, font ? font : G_FontMain, valueColor, sfx_slider.bar.x + sfx_slider.bar.w + 20, sfx_slider.bar.y - 10, volBuf);
     draw_slider(r, &sfx_slider, tex_sfx_track, tex_sfx_handle);
+    draw_text(r, font ? font : G_FontMain, valueColor, sfx_slider.bar.x + sfx_slider.bar.w + 20, sfx_slider.bar.y + sfx_slider.bar.h / 2 - 12, volBuf);
 
-    ui_button_render(r, font, &btn_bgm_toggle, tex_button_basic);
-    ui_button_render(r, font, &btn_sfx_toggle, tex_button_basic);
+    SDL_Texture *bgmToggleTex = G_Settings.audio.mute_bgm ? tex_music_off : tex_music_on;
+    SDL_Texture *sfxToggleTex = G_Settings.audio.mute_sfx ? tex_volume_off : tex_volume_on;
+    if (bgmToggleTex)
+        SDL_RenderCopy(r, bgmToggleTex, NULL, &btn_bgm_toggle.r);
+    else
+    {
+        SDL_SetRenderDrawColor(r, 200, 180, 150, 255);
+        SDL_RenderFillRect(r, &btn_bgm_toggle.r);
+        SDL_SetRenderDrawColor(r, 120, 90, 60, 255);
+        SDL_RenderDrawRect(r, &btn_bgm_toggle.r);
+    }
+    if (btn_bgm_toggle.hovered)
+    {
+        SDL_SetRenderDrawColor(r, 255, 255, 255, 140);
+        SDL_RenderDrawRect(r, &btn_bgm_toggle.r);
+    }
+    if (sfxToggleTex)
+        SDL_RenderCopy(r, sfxToggleTex, NULL, &btn_sfx_toggle.r);
+    else
+    {
+        SDL_SetRenderDrawColor(r, 200, 180, 150, 255);
+        SDL_RenderFillRect(r, &btn_sfx_toggle.r);
+        SDL_SetRenderDrawColor(r, 120, 90, 60, 255);
+        SDL_RenderDrawRect(r, &btn_sfx_toggle.r);
+    }
+    if (btn_sfx_toggle.hovered)
+    {
+        SDL_SetRenderDrawColor(r, 255, 255, 255, 140);
+        SDL_RenderDrawRect(r, &btn_sfx_toggle.r);
+    }
     ui_button_render(r, font, &btn_test, tex_button_basic);
     ui_button_render(r, NULL, &btn_back, s_backIcon);
+    ui_button_render(r, NULL, &btn_save, tex_save_icon);
 }
 
 static void handle(SDL_Event *e)
@@ -439,6 +566,7 @@ static void handle(SDL_Event *e)
     ui_button_handle(&btn_sfx_toggle, e);
     ui_button_handle(&btn_test, e);
     ui_button_handle(&btn_back, e);
+    ui_button_handle(&btn_save, e);
 
     if (e->type == SDL_QUIT)
     {
@@ -448,7 +576,6 @@ static void handle(SDL_Event *e)
 
     if (e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_ESCAPE)
     {
-        settings_save();
         scene_switch(SCENE_MAINMENU);
         return;
     }
@@ -591,6 +718,31 @@ static void cleanup(void)
         SDL_DestroyTexture(tex_sfx_handle);
         tex_sfx_handle = NULL;
     }
+    if (tex_save_icon)
+    {
+        SDL_DestroyTexture(tex_save_icon);
+        tex_save_icon = NULL;
+    }
+    if (tex_music_on)
+    {
+        SDL_DestroyTexture(tex_music_on);
+        tex_music_on = NULL;
+    }
+    if (tex_music_off)
+    {
+        SDL_DestroyTexture(tex_music_off);
+        tex_music_off = NULL;
+    }
+    if (tex_volume_on)
+    {
+        SDL_DestroyTexture(tex_volume_on);
+        tex_volume_on = NULL;
+    }
+    if (tex_volume_off)
+    {
+        SDL_DestroyTexture(tex_volume_off);
+        tex_volume_off = NULL;
+    }
     if (s_titleFont)
     {
         TTF_CloseFont(s_titleFont);
@@ -601,7 +753,6 @@ static void cleanup(void)
         TTF_CloseFont(font);
         font = NULL;
     }
-    settings_save();
 }
 
 static Scene SCENE_OBJ = {settings_init, handle, update, render, cleanup, "Settings"};

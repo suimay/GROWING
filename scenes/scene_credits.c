@@ -59,10 +59,12 @@ static void handle(SDL_Event* e)
         return;
     }
     if (e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_ESCAPE) {
-        scene_switch(SCENE_MAINMENU);
+        scene_switch_arg(SCENE_MAINMENU, NULL);
+        return;
     }
     if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT) {
-        scene_switch(SCENE_MAINMENU);
+        scene_switch_arg(SCENE_MAINMENU, NULL);
+        return;
     }
     if ((e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_DOWN) || e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_SPACE) {
         scroll_speed = 120.0f;

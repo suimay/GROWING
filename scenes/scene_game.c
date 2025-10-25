@@ -51,10 +51,7 @@ static void on_water(void* ud) {
 static void on_back(void* ud)
 {
     (void)ud;
-    if (s_plant)
-        scene_switch_arg(SCENE_PLANTINFO, (void *)(intptr_t)G_SelectedPlantIndex);
-    else
-        scene_switch(SCENE_SELECT_PLANT);
+    scene_switch(SCENE_MAINMENU);
 }
 
 //창문 토글
@@ -121,9 +118,9 @@ static void init(void *arg) {
         }
     }
     if (!s_backIcon) {
-        s_backIcon = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "I_back.png");
+        s_backIcon = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "I_exit.png");
         if (!s_backIcon) {
-            SDL_Log("GAMEPLAY: failed to load I_back.png: %s", IMG_GetError());
+            SDL_Log("GAMEPLAY: failed to load I_exit.png: %s", IMG_GetError());
         }
     }
     layout();
