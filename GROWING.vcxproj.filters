@@ -93,6 +93,9 @@
     <ClCompile Include="core\save.c">
       <Filter>소스 파일\core</Filter>
     </ClCompile>
+    <ClCompile Include="scenes\scene_plantinfo.c">
+      <Filter>소스 파일\scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\scene.h">
@@ -123,6 +126,9 @@
       <Filter>헤더 파일\include</Filter>
     </ClInclude>
     <ClInclude Include="include\save.h">
+      <Filter>헤더 파일\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\scene_plantinfo.h">
       <Filter>헤더 파일\include</Filter>
     </ClInclude>
   </ItemGroup>

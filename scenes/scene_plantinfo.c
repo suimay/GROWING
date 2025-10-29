@@ -1,4 +1,4 @@
-#include "scene_plantinfo.h"
+#include "../include/scene_plantinfo.h"
 #include "../include/scene.h"
 #include "../scene_manager.h"
 #include "../game.h"

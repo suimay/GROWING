@@ -90,7 +90,7 @@ static void settings_layout(int w, int h)
     int panelH = h - (margin * 2 + 80);
     if (panelH < 500)
         panelH = 500;
-    s_panelRect = (SDL_Rect){(w - panelW) / 2, margin + 50, panelW, panelH};
+    s_panelRect = (SDL_Rect){(w - panelW) / 2, margin + 50 , panelW, panelH};
 
     int trackBH = 28;
     int handleBW = 40;
@@ -133,10 +133,10 @@ static void settings_layout(int w, int h)
         sliderWidth = 320;
 
     int bgmCenterY = s_panelRect.y + 220;
-    btn_bgm_toggle.r = (SDL_Rect){contentLeft, bgmCenterY - toggleH / 2, toggleW, toggleH};
-    bgm_slider.bar = (SDL_Rect){sliderX, bgmCenterY - trackBH / 2, sliderWidth, trackBH};
-    bgm_slider.handle.w = handleBW;
-    bgm_slider.handle.h = handleBH;
+    btn_bgm_toggle.r = (SDL_Rect){contentLeft - 30, bgmCenterY - toggleH / 2, toggleW + 42, toggleH + 25};
+    bgm_slider.bar = (SDL_Rect){sliderX + 10, bgmCenterY - trackBH / 2, sliderWidth - 10, trackBH + 25};
+    bgm_slider.handle.w = handleBW + 20;
+    bgm_slider.handle.h = handleBH + 30;
     slider_sync_handle_from_value(&bgm_slider);
 
     int sfxCenterY = bgmCenterY + toggleH + 200;
@@ -151,7 +151,7 @@ static void settings_layout(int w, int h)
             sfxToggleH = th;
         }
     }
-    btn_sfx_toggle.r = (SDL_Rect){contentLeft, sfxCenterY - sfxToggleH / 2, sfxToggleW, sfxToggleH};
+    btn_sfx_toggle.r = (SDL_Rect){contentLeft - 30, sfxCenterY - sfxToggleH / 2, sfxToggleW + 42, sfxToggleH + 25};
 
     int sfxTrackH = trackBH;
     int sfxHandleW = handleBW;
@@ -173,19 +173,19 @@ static void settings_layout(int w, int h)
                 sfxHandleH = th;
         }
     }
-    sfx_slider.bar = (SDL_Rect){sliderX, sfxCenterY - sfxTrackH / 2, sliderWidth, sfxTrackH};
-    sfx_slider.handle.w = sfxHandleW;
-    sfx_slider.handle.h = sfxHandleH;
+    sfx_slider.bar = (SDL_Rect){sliderX + 10, sfxCenterY - sfxTrackH / 2, sliderWidth - 10, sfxTrackH + 25};
+    sfx_slider.handle.w = sfxHandleW + 20;
+    sfx_slider.handle.h = sfxHandleH + 30;
     slider_sync_handle_from_value(&sfx_slider);
 
     int headerHeight = 66;
-    s_bgmHeaderRect = (SDL_Rect){sliderX, bgm_slider.bar.y - headerHeight - 24, sliderWidth, headerHeight};
+    s_bgmHeaderRect = (SDL_Rect){sliderX, bgm_slider.bar.y - headerHeight - 24, sliderWidth - 470, headerHeight};
 
     int headerSpacing = 24;
     int testWidth = 240;
     if (testWidth > sliderWidth - 120)
         testWidth = sliderWidth / 2;
-    s_sfxHeaderRect = (SDL_Rect){sliderX, sfx_slider.bar.y - headerHeight - 24, sliderWidth - testWidth - headerSpacing, headerHeight};
+    s_sfxHeaderRect = (SDL_Rect){sliderX, sfx_slider.bar.y - headerHeight - 24, sliderWidth - testWidth - headerSpacing - 300, headerHeight};
     if (s_sfxHeaderRect.w < 180)
         s_sfxHeaderRect.w = 180;
     s_sfxTestRect = (SDL_Rect){s_sfxHeaderRect.x + s_sfxHeaderRect.w + headerSpacing, s_sfxHeaderRect.y, testWidth, headerHeight};
@@ -443,8 +443,8 @@ static void settings_render(SDL_Renderer *r)
             SDL_RenderDrawLine(r, 0, y, w, y);
         }
     }
-
-    SDL_SetRenderDrawColor(r, 179, 139, 98, 255);
+    s_panelRect = (SDL_Rect){ w  / 2 - 650 , 60 + 60 , 1300, 900 };
+    SDL_SetRenderDrawColor(r, 179, 139, 98, 255); // 179, 139, 98, 255
     SDL_RenderFillRect(r, &s_panelRect);
     SDL_SetRenderDrawColor(r, 92, 63, 44, 255);
     SDL_RenderDrawRect(r, &s_panelRect);
@@ -464,23 +464,23 @@ static void settings_render(SDL_Renderer *r)
             SDL_Texture *tex = SDL_CreateTextureFromSurface(r, surf);
             int tw = surf->w;
             int th = surf->h;
-            int scaledW = (int)(tw * 1.4f + 0.5f);
-            int scaledH = (int)(th * 1.4f + 0.5f);
+            int scaledW = (int)(tw * 1.3f + 0.5f);
+            int scaledH = (int)(th * 1.3f + 0.5f);
             if (scaledW < 1)
                 scaledW = 1;
             if (scaledH < 1)
                 scaledH = 1;
 
             int centerX = s_panelRect.x + s_panelRect.w / 2;
-            int titleY = s_panelRect.y - 40;
+            int titleY = s_panelRect.y - 30;
 
             if (s_titlebarTex && s_titlebarW > 0 && s_titlebarH > 0)
             {
                 int desiredWidth = scaledW + 220;
-                int scale = (desiredWidth + s_titlebarW - 1) / s_titlebarW;
+                int scale = (desiredWidth + s_titlebarW - 1) / s_titlebarW + 2.0;
                 if (scale < 1)
                     scale = 1;
-                SDL_Rect barDst = {centerX - (s_titlebarW * scale) / 2, titleY - (s_titlebarH * scale) / 2, s_titlebarW * scale, s_titlebarH * scale};
+                SDL_Rect barDst = {centerX - (s_titlebarW * scale) / 2, titleY - (s_titlebarH * scale) / 2 + 15, s_titlebarW * scale, s_titlebarH * scale};
                 SDL_RenderCopy(r, s_titlebarTex, NULL, &barDst);
             }
 

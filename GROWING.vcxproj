@@ -146,6 +146,7 @@
     <ClCompile Include="scenes\scene_game.c" />
     <ClCompile Include="scenes\scene_loading.c" />
     <ClCompile Include="scenes\scene_mainmenu.c" />
+    <ClCompile Include="scenes\scene_plantinfo.c" />
     <ClCompile Include="scenes\scene_selectplant.c" />
     <ClCompile Include="scenes\scene_settings.c" />
     <ClCompile Include="scene_manager.c" />
@@ -161,6 +162,7 @@
     <ClInclude Include="include\loading.h" />
     <ClInclude Include="include\save.h" />
     <ClInclude Include="include\scene.h" />
+    <ClInclude Include="include\scene_plantinfo.h" />
     <ClInclude Include="include\settings.h" />
     <ClInclude Include="include\ui.h" />
     <ClInclude Include="include\utils.h" />

@@ -2,7 +2,7 @@
 #include "scene_manager.h"
 #include "include/common.h"
 #include "include/loading.h"
-#include "settings.h"
+#include "include/settings.h"
 
 // 씬 “팩토리” 프로토타입
 Scene *scene_mainmenu_object(void);
