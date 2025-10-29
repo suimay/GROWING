@@ -33,9 +33,11 @@ typedef struct
     VideoSettings video;
     GameplaySettings gameplay;
     ControlSettings controls;
+    
 } GameSettings;
 
 extern GameSettings G_Settings;
+
 
 void settings_set_defaults(void);
 

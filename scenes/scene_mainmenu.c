@@ -3,6 +3,9 @@
 #include "../game.h"
 #include "../include/ui.h"
 #include "../include/loading.h"
+#include "../include/gameplay.h"
+#include "../include/core.h"
+#include "../include/settings.h"
 #include <stdbool.h>
 #include <parson.h>
 #define BTN_COUNT 6
@@ -10,6 +13,7 @@
 static UIButton s_buttons[BTN_COUNT];
 static Mix_Chunk *sfx_click = NULL;
 static Mix_Chunk *sfx_hover = NULL;
+Mix_Music* G_MenuMusic = NULL;
 
 typedef struct
 {
@@ -24,6 +28,10 @@ static int s_bgFrameCount = 0;
 static int s_bgFrameIndex = 0;
 static float s_bgFrameElapsedMs = 0.f;
 static bool s_bgFramesUseAtlas = false;
+
+extern LoadCtx s_loadCtx; // gameplay.c에 '정의'가 있으니 여기선 extern
+extern int gameplay_loading_job(void* userdata, float* out_progress);
+extern int plantdb_find_index_by_id(const char* id); // 네가 가진 유틸로 맞춰 쓰면 됨
 
 static void destroy_frame_textures(void)
 {
@@ -46,7 +54,24 @@ static void on_start(void *ud)
 static void on_continue(void *ud)
 {
     (void)ud;
-    scene_switch_fade(SCENE_GAMEPLAY, 0.2f, 0.4f);
+
+    const char* last_id = G_Settings.gameplay.last_selected_plant;
+    int idx = plantdb_find_index_by_id(last_id);
+    if (idx < 0) {
+        SDL_Log("[CONTINUE] invalid plant id '%s', fallback to select scene", last_id);
+        scene_switch(SCENE_SELECT_PLANT);
+        return;
+    }
+
+    // 2️⃣ 선택 인덱스 전역 반영
+    G_SelectedPlantIndex = idx;
+    SDL_Log("[CONTINUE] continue plant index=%d (%s)", idx, last_id);
+
+    // 3️⃣ 로딩씬 시작
+    s_loadCtx.step = 0;
+    s_loadCtx.t0 = 0;
+
+    loading_begin(SCENE_GAMEPLAY, gameplay_loading_job, &s_loadCtx, 0.15f, 0.15f);
 }
 static void on_codex(void *ud)
 {
@@ -269,6 +294,15 @@ static void init(void *arg)
     sfx_click = G_SFX_Click;
     sfx_hover = G_SFX_Hover ? G_SFX_Hover : sfx_click;
 
+    
+
+    if (!G_MenuMusic) G_MenuMusic = Mix_LoadMUS(ASSETS_SOUNDS_DIR "Morning_twilight.wav");
+    if (G_MenuMusic) {
+        // 루프 계속
+        if (!Mix_PlayingMusic()) Mix_FadeInMusic(G_MenuMusic, -1, 300);
+    }
+    settings_apply_audio();
+
     layout();
     int want = IMG_INIT_PNG;
     if ((IMG_Init(want) & want) != want)
@@ -323,7 +357,7 @@ static void init(void *arg)
         SDL_Log("Load title.png failed: %s", IMG_GetError());
     }
 
-    s_titleFont = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 48);
+    s_titleFont = TTF_OpenFont(ASSETS_FONTS_DIR "NeoDunggeunmoPro-Regular.ttf", 48);
     if (!s_titleFont)
     {
         SDL_Log("TitleFont Open: %s", TTF_GetError());
@@ -331,7 +365,7 @@ static void init(void *arg)
 
     SDL_Log("[MAINMENU] TTF_WasInit=%d", TTF_WasInit());
     {
-        const char *p = ASSETS_FONTS_DIR "NotoSansKR.ttf";
+        const char *p = ASSETS_FONTS_DIR "NeoDunggeunmoPro-Regular.ttf";
         SDL_RWops *rw = SDL_RWFromFile(p, "rb");
         SDL_Log("[MAINMENU] font path: %s, exist=%s", p, rw ? "YES" : "NO");
         if (rw)
@@ -345,6 +379,9 @@ static void init(void *arg)
 
     // render() 타이틀 그리기 직전에
     SDL_Log("[MAINMENU] render title try");
+
+    
+    
 }
 static void handle(SDL_Event *e)
 {
@@ -468,6 +505,7 @@ static void render(SDL_Renderer *r)
     }
 
     // 3) 서브 타이틀
+    /*
     if (G_FontMain)
     {
         SDL_Color subC = {210, 230, 220, 255};
@@ -485,6 +523,7 @@ static void render(SDL_Renderer *r)
             SDL_FreeSurface(s);
         }
     }
+    */
 
     // 4) 버튼
     for (int i = 0; i < BTN_COUNT; i++)

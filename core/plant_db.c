@@ -57,3 +57,15 @@ int plantdb_load(const char* json_path) {
     SDL_Log("plantdb: loaded %d plants", g_count);
     return g_count;
 }
+
+int plantdb_find_index_by_id(const char* id) {
+    if (!id || !*id) return -1; // 빈 문자열 방어
+    int n = plantdb_count();    // 전체 식물 개수
+    for (int i = 0; i < n; ++i) {
+        const PlantInfo* p = plantdb_get(i);
+        if (p && SDL_strcmp(p->id, id) == 0) {
+            return i; // ✅ 일치하는 인덱스 반환
+        }
+    }
+    return -1; // 찾지 못함
+}

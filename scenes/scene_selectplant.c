@@ -3,6 +3,8 @@
 #include "../game.h"
 #include "../include/ui.h"
 #include "../include/core.h"
+#include "../include/loading.h"
+
 #include <stdint.h>
 
 #define MAX_COL 2

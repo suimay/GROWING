@@ -2,149 +2,230 @@
 #include "../scene_manager.h"
 #include "../game.h"
 #include "../include/ui.h"
-#include <SDL2/SDL_image.h> // 로딩 아이콘 이미지 쓰고 싶으면
-
-static struct {
-    SceneID target;
-    LoadingJobFn job;
-    void* userdata;
-    SDL_Thread* thread;
-    int progress;
-    int done;
-    float wait_after_done; // 끝난 뒤 잠깐 보여줄 시간(연출용)
-    float timer;
-} LD;
-
-static SDL_Texture* s_spinner = NULL;  // assets/images/spinner.png (선택)
-static float spin_deg = 0.f;
-
-static UIProgressBar s_pb;
+#include <SDL2/SDL_image.h>
+#include <parson.h>
 
 
+LoadingData LD;                 // 전역 정의 (단 한 번)
 
-// -------------------- 내부: 스레드에서 하는 일 --------------------
-static int loading_thread(void* p) {
-    // 실제 작업이 있으면 실행하면서 진행률을 갱신 (예: 0→100)
-    if (LD.job) {
-        LD.progress = 0;
-        LD.job(LD.userdata); // 내부에서 진행률을 조절하고 싶다면 전역 LD.progress 포인터를 넘기는 방식으로 바꿔도 됨
-        LD.progress = 100;
+static SDL_Texture* s_spinner = NULL;
+
+static UIProgressBar g_LoadingBar;
+
+typedef struct {
+    SDL_Rect rect;      // 시트 내 프레임 영역
+    int      duration;  // ms 단위
+} LFrame;
+
+static SDL_Texture* s_animAtlas = NULL; // 예: assets/images/loading_sheet.png
+static LFrame       s_animFrames[128];
+static int          s_animCount = 0;
+static int          s_animIndex = 0;
+static float        s_animElapsed = 0.f;
+
+static int   s_waiting_after_done = 0;   // 완료 후 대기중인지
+static float s_wait_timer = 0.0f;         // 누적 시간
+static const float S_WAIT_DURATION = 3.0f; // ✅ n초 대기
+
+
+static int load_loading_anim(const char* sheetPath, const char* jsonPath) {
+    // 시트 텍스처
+    if (s_animAtlas) { SDL_DestroyTexture(s_animAtlas); s_animAtlas = NULL; }
+    s_animAtlas = IMG_LoadTexture(G_Renderer, sheetPath);
+    if (!s_animAtlas) {
+        SDL_Log("[LOADING ANIM] sheet load fail: %s", IMG_GetError());
+        return 0;
     }
-    else {
-        // 간단한 페이크 로딩 (연출용)
-        for (int i = 0;i <= 100;i += 5) { LD.progress = i; SDL_Delay(20); }
+    int atlasW = 0, atlasH = 0; SDL_QueryTexture(s_animAtlas, NULL, NULL, &atlasW, &atlasH);
+
+    // JSON 파싱
+    JSON_Value* root = json_parse_file(jsonPath);
+    if (!root) { SDL_Log("[LOADING ANIM] json parse fail"); return 0; }
+    JSON_Object* robj = json_value_get_object(root);
+    JSON_Object* framesObj = json_object_get_object(robj, "frames");
+    JSON_Array* framesArr = json_object_get_array(robj, "frames");
+
+    s_animCount = 0; s_animIndex = 0; s_animElapsed = 0.f;
+    if (framesObj) {
+        size_t n = json_object_get_count(framesObj);
+        for (size_t i = 0;i < n && s_animCount < SDL_arraysize(s_animFrames);++i) {
+            const char* key = json_object_get_name(framesObj, i);
+            JSON_Object* f = json_object_get_object(framesObj, key);
+            if (!f) continue;
+            JSON_Object* r = json_object_get_object(f, "frame"); if (!r) continue;
+
+            LFrame fr;
+            fr.rect.x = (int)json_object_get_number(r, "x");
+            fr.rect.y = (int)json_object_get_number(r, "y");
+            fr.rect.w = (int)json_object_get_number(r, "w");
+            fr.rect.h = (int)json_object_get_number(r, "h");
+            fr.duration = (int)json_object_get_number(f, "duration");
+            if (fr.duration <= 0) fr.duration = 100;
+
+            // 범위 체크
+            if (fr.rect.w <= 0 || fr.rect.h <= 0) continue;
+            if (fr.rect.x<0 || fr.rect.y<0 ||
+                fr.rect.x + fr.rect.w>atlasW || fr.rect.y + fr.rect.h>atlasH) continue;
+
+            s_animFrames[s_animCount++] = fr;
+        }
     }
-    LD.done = 1;
-    return 0;
+    else if (framesArr) {
+        size_t n = json_array_get_count(framesArr);
+        for (size_t i = 0;i < n && s_animCount < SDL_arraysize(s_animFrames);++i) {
+            JSON_Object* f = json_array_get_object(framesArr, i);
+            if (!f) continue;
+            JSON_Object* r = json_object_get_object(f, "frame"); if (!r) continue;
+
+            LFrame fr;
+            fr.rect.x = (int)json_object_get_number(r, "x");
+            fr.rect.y = (int)json_object_get_number(r, "y");
+            fr.rect.w = (int)json_object_get_number(r, "w");
+            fr.rect.h = (int)json_object_get_number(r, "h");
+            fr.duration = (int)json_object_get_number(f, "duration");
+            if (fr.duration <= 0) fr.duration = 100;
+
+            if (fr.rect.w <= 0 || fr.rect.h <= 0) continue;
+            if (fr.rect.x<0 || fr.rect.y<0 ||
+                fr.rect.x + fr.rect.w>atlasW || fr.rect.y + fr.rect.h>atlasH) continue;
+
+            s_animFrames[s_animCount++] = fr;
+        }
+    }
+    json_value_free(root);
+
+    SDL_Log("[LOADING ANIM] loaded frames=%d", s_animCount);
+    return (s_animCount > 0);
 }
 
-// -------------------- Scene 콜백들 --------------------
-static void init(void *arg) {
+
+static void init(void* arg) {
     (void)arg;
-    LD.thread = NULL;
     LD.done = 0;
-    LD.timer = 0.f;
-    LD.wait_after_done = 0.25f; // 로딩이 끝나도 0.25초 정도는 보여주기
+    LD.progress = 0;
 
-    if (!s_spinner) {
-        s_spinner = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "spinner.png"); // 없으면 NULL이어도 OK
-    }
+    s_waiting_after_done = 0;   // ✅ 리셋
+    s_wait_timer = 0.0f;        // ✅ 리셋
 
-    // 작업 스레드 시작
-    LD.thread = SDL_CreateThread(loading_thread, "loading_thread", NULL);
+    if (!s_spinner)
+        s_spinner = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "spinner.png");
 
-    int w, h; SDL_GetRendererOutputSize(G_Renderer, &w, &h);
-    // 화면 중앙 하단 쪽에 가로 420, 높이 22
-    ui_progress_init(&s_pb, (SDL_Rect) { (w - 420) / 2, (h / 2) + 60, 420, 22 });
-    // 작업 스레드 시작
-    LD.thread = SDL_CreateThread(loading_thread, "loading_thread", NULL);
+    load_loading_anim(ASSETS_IMAGES_DIR "loading_leaf.png",ASSETS_DIR "data/loading_leaf.json");
+
+    int w,h; SDL_GetRendererOutputSize(G_Renderer,&w,&h);
+    ui_progress_init(&g_LoadingBar, (SDL_Rect){ (w-420)/2, (h/2)+60, 420, 22 });
 }
 
 static void handle(SDL_Event* e) {
-    if (e->type == SDL_QUIT) { G_Running = 0; }
+    if (e->type == SDL_QUIT) G_Running = 0;
 }
 
 static void update(float dt) {
-    spin_deg += 360.f * dt * 0.8f;
+    (void)dt;
 
-    if (LD.done) {
-        LD.timer += dt;
-        if (LD.timer >= LD.wait_after_done) {
-            // 완료 → 목표 씬으로 페이드 전환
-            scene_switch_fade(LD.target, 0.0f, 0.35f);
-            // (주의) 여기서 스레드 Join까지 하고 싶으면 아래처럼:
-            if (LD.thread) { SDL_WaitThread(LD.thread, NULL); LD.thread = NULL; }
+    if (s_animCount > 0) {
+        s_animElapsed += dt * 1000.f;
+        int dur = s_animFrames[s_animIndex].duration;
+        if (dur <= 0) dur = 100;
+        while (s_animElapsed >= dur) {
+            s_animElapsed -= dur;
+            s_animIndex = (s_animIndex + 1) % s_animCount;
+            dur = s_animFrames[s_animIndex].duration;
+            if (dur <= 0) dur = 100;
         }
     }
-    ui_progress_set(&s_pb, LD.progress / 100.0f);
+
+    if (s_waiting_after_done) {
+        s_wait_timer += dt;
+        if (s_wait_timer >= S_WAIT_DURATION) {
+            s_waiting_after_done = 0;
+            scene_switch_fade(LD.target, 0.2f, 0.2f);
+        }
+        return;
+    }
+
+    if (LD.job && !LD.done) {
+        float p = LD.progress;
+        int finished = LD.job(LD.userdata, &p);
+        LD.progress = p;
+        ui_progress_set(&g_LoadingBar, p / 100.0f);  // 0~1 스케일
+
+        if (finished) {
+            LD.done = 1;
+            LD.progress = 100.0f;
+            ui_progress_set(&g_LoadingBar, 1.0f);
+
+            // ✅ 완료 후 대기 시작
+            s_waiting_after_done = 1;
+            s_wait_timer = 0.0f;
+        }
+        return;
+    }
+
+    // ✅ 완료 후 5초 대기 타이머
+    if (s_waiting_after_done) {
+        s_wait_timer += dt;
+        if (s_wait_timer >= S_WAIT_DURATION) {
+            s_waiting_after_done = 0;
+            // 로딩씬 → 타겟 씬으로 페이드
+            scene_switch_fade(LD.target, 0.2f, 0.2f);
+        }
+    }
 }
 
 static void render(SDL_Renderer* r) {
-    // 배경
-    SDL_SetRenderDrawColor(r, 14, 18, 26, 255);
-    
+    SDL_SetRenderDrawColor(r, 14,18,26,255);
+    SDL_RenderClear(r);
 
-    int w, h; SDL_GetRendererOutputSize(r, &w, &h);
+    int w,h; SDL_GetRendererOutputSize(r,&w,&h);
 
-    // “Loading…” 텍스트
+    if (s_animAtlas && s_animCount > 0) {
+        const LFrame* fr = &s_animFrames[s_animIndex];
+        // 스케일 배수 (원본이 작다면 키워서)
+        const int scale = 3; // 원하는 배수
+        SDL_Rect dst = {
+            (w - fr->rect.w * scale),
+            (h - fr->rect.h * scale),  // 텍스트와 겹치지 않게 살짝 위
+            fr->rect.w * scale,
+            fr->rect.h * scale
+        };
+        SDL_RenderCopy(r, s_animAtlas, &fr->rect, &dst);
+    }
+
     if (G_FontMain) {
-        char buf[64];
-        SDL_Color fg = { 220, 230, 235, 255 };
-        SDL_snprintf(buf, sizeof(buf), "Loading... %d%%", (int)LD.progress);
-
+        SDL_Color fg = {217,54,214,255};
+        char buf[64]; SDL_snprintf(buf,sizeof(buf),"Loading... %d%%",(int)LD.progress);
         SDL_Surface* s = TTF_RenderUTF8_Blended(G_FontMain, buf, fg);
         if (s) {
-            SDL_Texture* t = SDL_CreateTextureFromSurface(r, s);
-            int tw, th; SDL_QueryTexture(t, NULL, NULL, &tw, &th);
-            SDL_Rect d = { (w - tw) / 2, (h - th) / 2 - 20, tw, th };
-            SDL_RenderCopy(r, t, NULL, &d);
-            SDL_DestroyTexture(t);
-            SDL_FreeSurface(s);
-        }
-    }
-
-    // 스피너(선택)
-    if (s_spinner) {
-        int sw = 64, sh = 64;
-        SDL_Rect dst = { w / 2 - sw / 2, h / 2 + 20, sw, sh };
-        SDL_RenderCopyEx(r, s_spinner, NULL, &dst, spin_deg, NULL, SDL_FLIP_NONE);
-    }
-
-    // 하단 힌트(선택)
-    if (G_FontMain) {
-        SDL_Color c = { 180, 190, 200, 200 };
-        SDL_Surface* s = TTF_RenderUTF8_Blended(G_FontMain, "Tip: ESC to cancel (if supported)", c);
-        if (s) {
-            SDL_Texture* t = SDL_CreateTextureFromSurface(r, s);
-            int tw, th; SDL_QueryTexture(t, NULL, NULL, &tw, &th);
-            SDL_Rect d = { w - tw - 20, h - th - 16, tw, th };
-            SDL_RenderCopy(r, t, NULL, &d);
+            SDL_Texture* t = SDL_CreateTextureFromSurface(r,s);
+            int tw,th; SDL_QueryTexture(t,NULL,NULL,&tw,&th);
+            SDL_Rect d = { (w-tw)/2, (h-th)/2 - 20, tw, th };
+            SDL_RenderCopy(r,t,NULL,&d);
             SDL_DestroyTexture(t); SDL_FreeSurface(s);
         }
     }
 
-    ui_progress_render(r, G_FontMain, &s_pb);
+    if (s_spinner) {
+        SDL_Rect d = { w/2-32, h/2+20, 64,64 };
+        SDL_RenderCopy(r, s_spinner, NULL, &d);
+    }
+
+    ui_progress_render(r, G_FontMain, &g_LoadingBar);
 }
 
-static void cleanup(void) {
-    if (LD.thread) { SDL_WaitThread(LD.thread, NULL); LD.thread = NULL; }
-    // s_spinner는 프로젝트 전역에서 쓸 수 있으니 굳이 여기서 파괴 안 해도 됨
-    // 필요 시: SDL_DestroyTexture(s_spinner); s_spinner=NULL;
+static void cleanup(void) { if (s_animAtlas) { SDL_DestroyTexture(s_animAtlas); s_animAtlas = NULL; } }
+
+void loading_begin(SceneID target, LoadingJobFn job, void* userdata,
+                   float fade_out_sec, float fade_in_sec)
+{
+    LD.target   = target;
+    LD.job      = job;
+    LD.userdata = userdata;
+    LD.progress = 0;
+    LD.done     = 0;
+
+    scene_switch_fade(SCENE_LOADING, fade_out_sec, 0.2f);
 }
 
 static Scene SCENE_OBJ = { init, handle, update, render, cleanup, "Loading" };
 Scene* scene_loading_object(void) { return &SCENE_OBJ; }
-
-// -------------------- 공개 API --------------------
-void loading_begin(SceneID target, LoadingJobFn job, void* userdata,
-    float fade_out_sec, float fade_in_sec)
-{
-    LD.target = target;
-    LD.job = job;
-    LD.userdata = userdata;
-    LD.progress = 0;
-    LD.done = 0;
-
-    // 현재 씬 → 로딩 씬으로 페이드 아웃/인
-    scene_switch_fade(SCENE_LOADING, fade_out_sec, 0.2f);
-}

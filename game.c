@@ -35,12 +35,14 @@ int game_init(void) {
     if (!G_Renderer) { SDL_Log("CreateRenderer: %s", SDL_GetError()); return 0; }
 
     // 기본 폰트/BGM
-    G_FontMain = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 28);
+    G_FontMain = TTF_OpenFont(ASSETS_FONTS_DIR "NeoDunggeunmoPro-Regular.ttf", 28);
     if (!G_FontMain) SDL_Log("TTF_OpenFont: %s", TTF_GetError());
 
+    /*
     G_BGM = Mix_LoadMUS(ASSETS_SOUNDS_DIR "MAINSCENEBGM.wav");
     if (!G_BGM) SDL_Log("LoadMUS: %s", Mix_GetError());
     else { Mix_VolumeMusic((int)(0.7f * MIX_MAX_VOLUME)); Mix_PlayMusic(G_BGM, -1); }
+    */
         
     G_SFX_Click = Mix_LoadWAV(ASSETS_SOUNDS_DIR "click.wav");
     G_SFX_Hover = Mix_LoadWAV(ASSETS_SOUNDS_DIR "move.wav");

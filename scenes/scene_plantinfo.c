@@ -5,10 +5,13 @@
 #include "../include/core.h"
 #include "../include/ui.h"
 #include "../include/settings.h"
+#include "../include/loading.h"
+#include "../include/gameplay.h" 
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <stdint.h>
 #include <stdarg.h>
+
 
 typedef struct
 {
@@ -34,11 +37,15 @@ typedef struct
     TTF_Font *font_small;
 } PlantInfoCtx;
 
+
 static PlantInfoCtx s_ctx = {0};
+
 
 static void plantinfo_on_back(void *ud);
 static void plantinfo_on_select(void *ud);
 static void layout(int w, int h);
+
+extern int gameplay_loading_job(void* userdata, float* out_progress);
 
 static void draw_text(SDL_Renderer *r, TTF_Font *font, SDL_Color color, int x, int y, const char *fmt, ...)
 {
@@ -91,7 +98,7 @@ static bool ensure_resources_loaded(void)
     }
     if (!s_ctx.font_title)
     {
-        s_ctx.font_title = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 44);
+        s_ctx.font_title = TTF_OpenFont(ASSETS_FONTS_DIR "NeoDunggeunmoPro-Regular.ttf", 44);
         if (!s_ctx.font_title)
             SDL_Log("PLANTINFO: title font load failed: %s", TTF_GetError());
     }
@@ -103,7 +110,7 @@ static bool ensure_resources_loaded(void)
     }
     if (!s_ctx.font_small)
     {
-        s_ctx.font_small = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 24);
+        s_ctx.font_small = TTF_OpenFont(ASSETS_FONTS_DIR "NeoDunggeunmoPro-Regular.ttf", 24);
         if (!s_ctx.font_small)
             SDL_Log("PLANTINFO: small font load failed: %s", TTF_GetError());
     }
@@ -315,7 +322,7 @@ void plantinfo_render(void)
         textY += 36;
         draw_text(r, s_ctx.font_body, bodyColor, textX, textY, "빛: %s", light_text(s_ctx.plant->light_level));
         textY += 36;
-        draw_text(r, s_ctx.font_body, bodyColor, textX, textY, "온도: %d℃ ~ %d℃", s_ctx.plant->min_temp, s_ctx.plant->max_temp);
+        draw_text(r, s_ctx.font_body, bodyColor, textX, textY, "온도: %d ℃ ~ %d ℃", s_ctx.plant->min_temp, s_ctx.plant->max_temp);
         textY += 48;
         draw_text(r, s_ctx.font_small, subtleColor, textX, textY, "Tip: 이 식물의 환경을 확인하고 준비해 주세요!");
     }
@@ -372,14 +379,25 @@ static void plantinfo_on_back(void *ud)
     scene_switch(SCENE_SELECT_PLANT);
 }
 
-static void plantinfo_on_select(void *ud)
-{
-    (void)ud;
-    if (s_ctx.plant)
-    {
-        G_SelectedPlantIndex = s_ctx.plant_index;
-        scene_switch_arg(SCENE_GAMEPLAY, (void *)(intptr_t)s_ctx.plant_index);
+static void plantinfo_on_select(void* userdata) {
+    (void)userdata;
+    // 현재 화면에서 선택한 식물 인덱스를 사용
+    int idx = (int)(intptr_t)userdata;
+    G_SelectedPlantIndex = idx;
+
+    const PlantInfo* plant = plantdb_get(idx);
+    if (plant && plant->id[0]) {
+        SDL_strlcpy(G_Settings.gameplay.last_selected_plant, plant->id,
+            sizeof(G_Settings.gameplay.last_selected_plant));
+        settings_save(); // 저장 함수가 있다면 호출
     }
+
+    // 로딩 컨텍스트 초기화
+    s_loadCtx.step = 0;
+    s_loadCtx.t0 = 0;
+
+    // 로딩 시작: Gameplay로 전환
+    loading_begin(SCENE_GAMEPLAY, gameplay_loading_job, &s_loadCtx, 0.15f, 0.15f);
 }
 
 /* Scene bridge */

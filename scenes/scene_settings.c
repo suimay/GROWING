@@ -255,14 +255,14 @@ static void settings_init(void *arg)
 
     if (!font)
     {
-        font = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 28);
+        font = TTF_OpenFont(ASSETS_FONTS_DIR "NeoDunggeunmoPro-Regular.ttf", 28);
         if (!font)
             SDL_Log("Settings font load failed: %s", TTF_GetError());
     }
 
     if (!s_titleFont)
     {
-        s_titleFont = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 46);
+        s_titleFont = TTF_OpenFont(ASSETS_FONTS_DIR "NeoDunggeunmoPro-Regular.ttf", 46);
         if (!s_titleFont)
             SDL_Log("Settings title font load failed: %s", TTF_GetError());
     }

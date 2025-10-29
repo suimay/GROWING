@@ -210,14 +210,14 @@ static void init(void *arg)
 
     if (!s_font)
     {
-    s_font = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 24);
+    s_font = TTF_OpenFont(ASSETS_FONTS_DIR "NeoDunggeunmoPro-Regular.ttf", 24);
     if (!s_font)
         SDL_Log("CODEX 폰트로드 실패:%s", TTF_GetError());
     }
 
     if (!s_titleFont)
     {
-    s_titleFont = TTF_OpenFont(ASSETS_FONTS_DIR "NotoSansKR.ttf", 40);
+    s_titleFont = TTF_OpenFont(ASSETS_FONTS_DIR "NeoDunggeunmoPro-Regular.ttf", 40);
     if (!s_titleFont)
         SDL_Log("CODEX 타이틀 폰트로드 실패:%s", TTF_GetError());
     }

@@ -19,4 +19,5 @@ typedef struct {
 int       plantdb_load(const char* json_path);  // returns count or -1
 void      plantdb_free(void);
 int       plantdb_count(void);
+int plantdb_find_index_by_id(const char* id);
 const PlantInfo* plantdb_get(int idx);
