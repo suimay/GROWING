@@ -16,7 +16,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <time.h>
-#include <parson.h>"
+#include <parson.h>
 
 LoadCtx s_loadCtx;          // 정의(여기 딱 1곳)
 
