@@ -42,7 +42,9 @@ static bool s_windowOpen = false;
 
 static SDL_Texture* s_bgTexture = NULL;   // fallback 배경(옵션)
 static SDL_Texture* s_backIcon = NULL;   // ← 버튼 아이콘(옵션)
-
+static SDL_Texture* s_water = NULL;
+static SDL_Texture* s_window = NULL;
+//static SDL_Texture* s_ = NULL;
 // -----------------------------
 // 인게임 BGM (랜덤 재생)
 // -----------------------------
@@ -106,6 +108,7 @@ typedef struct {
 } AnimFrame;
 
 static SDL_Texture* s_bgAtlas = NULL;
+static SDL_Texture* s_room = NULL;
 static AnimFrame    s_bgFrames[128];
 static int          s_bgFrameCount = 0;
 static int          s_bgFrameIndex = 0;
@@ -256,12 +259,15 @@ static void load_background_animation(void)
 
     if (s_bgAtlas) { SDL_DestroyTexture(s_bgAtlas); s_bgAtlas = NULL; }
 
-    s_bgAtlas = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "garagame-Sheet.png");
+
+    s_bgAtlas = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "sunset.png");
     if (!s_bgAtlas) {
         SDL_Log("[ANIM] Load garagame-Sheet.png failed: %s", IMG_GetError());
     }
 
-    JSON_Value* root = json_parse_file(ASSETS_DIR "data/garagame.json");
+    s_room = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "room.png");
+
+    JSON_Value* root = json_parse_file(ASSETS_DIR "data/sunset.json");
     if (!root) { SDL_Log("[ANIM] parse fail"); return; }
     JSON_Object* robj = json_value_get_object(root);
 
@@ -369,7 +375,7 @@ static void load_background_animation(void)
     if (s_bgAtlas) { s_bgFramesUseAtlas = true; return; }
 
     // (옵션) 아틀라스가 없다면 분할 텍스쳐 생성
-    SDL_Surface* atlasSurface = IMG_Load(ASSETS_IMAGES_DIR "garagame-Sheet.png");
+    SDL_Surface* atlasSurface = IMG_Load(ASSETS_IMAGES_DIR "room.png");
     if (!atlasSurface) { SDL_Log("[ANIM] fallback surface load fail: %s", IMG_GetError()); s_bgFrameCount = 0; return; }
 
     if (atlasSurface->format->format != SDL_PIXELFORMAT_RGBA32) {
@@ -450,8 +456,16 @@ static void init(void* arg)
         if (!s_bgTexture) SDL_Log("GAMEPLAY: load select_Background.png fail: %s", IMG_GetError());
     }
     if (!s_backIcon) {
-        s_backIcon = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "I_exit.png");
+        s_backIcon = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "I_back.png");
         if (!s_backIcon) SDL_Log("GAMEPLAY: load I_exit.png fail: %s", IMG_GetError());
+    }
+    if (!s_water) {
+        s_water = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "I_water.png");
+        if (!s_water) SDL_Log("GAMEPLAY: load I_water.png fail: %s", IMG_GetError());
+    }
+    if (!s_window) {
+        s_window = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "I_window.png");
+        if (!s_window) SDL_Log("GAMEPLAY: load I_window.png fail: %s", IMG_GetError());
     }
 
     // 메뉴 BGM이 재생 중이면 부드럽게 끄기
@@ -553,8 +567,13 @@ static void render(SDL_Renderer* r)
         }
     }
 
+    if (s_room) {
+        SDL_Rect dst = { 0,0,w,h };
+        SDL_RenderCopy(r, s_room, NULL, &dst);
+    }
+
     // (옵션) HUD 텍스트
-    /*
+    
     if (s_plant) {
         SDL_Color title = {240,236,228,255};
         SDL_Color body  = {210,200,186,255};
@@ -563,12 +582,12 @@ static void render(SDL_Renderer* r)
         draw_text(r, body,  x, y+36, "물 준 횟수: %d회 · 권장 %d일", s_waterCount, s_plant->water_days);
         draw_text(r, body,  x, y+72, "창문: %s", s_windowOpen ? "열림" : "닫힘");
     }
-    */
+    
 
     // 버튼 (배경아이콘을 버튼 배경으로 쓰려면 마지막 인자에 s_backIcon 넘기기)
-    // ui_button_render(r, G_FontMain, &s_btnBack,   s_backIcon);
-    // ui_button_render(r, G_FontMain, &s_btnWater,  NULL);
-    // ui_button_render(r, G_FontMain, &s_btnWindow, NULL);
+     ui_button_render(r, G_FontMain, &s_btnBack,   s_backIcon);
+     ui_button_render(r, G_FontMain, &s_btnWater,  s_water);
+     ui_button_render(r, G_FontMain, &s_btnWindow, s_window);
 }
 
 static void cleanup(void)
@@ -578,6 +597,8 @@ static void cleanup(void)
     if (s_bgAtlas) { SDL_DestroyTexture(s_bgAtlas);   s_bgAtlas = NULL; }
     if (s_bgTexture) { SDL_DestroyTexture(s_bgTexture); s_bgTexture = NULL; }
     if (s_backIcon) { SDL_DestroyTexture(s_backIcon);  s_backIcon = NULL; }
+    if (s_water) { SDL_DestroyTexture(s_water);  s_water = NULL; }
+    if (s_window) { SDL_DestroyTexture(s_window);  s_window = NULL; }
 
     // 인게임 BGM 콜백 해제
     Mix_HookMusicFinished(NULL);
