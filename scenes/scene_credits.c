@@ -26,10 +26,10 @@ static CreditLine lines[] = {
     {" "},
     {"Music"},
     {"Main Theme: 'Morning twilight' 김기태"},
-    {"Theme2 : '???' ??? "},
-    {"Theme3 : '???' ??? "},
-    {"Theme4 : '???' ??? "},
-    {"Theme5 : '???' ??? "},
+    {"Theme2 : TBD"},
+    {"Theme3 : TBD"},
+    {"Theme4 : TBD"},
+    {"Theme5 : TBD"},
     {"Sound Effects: SDL2 Mixer Pack"},
     {" "},
     {"Special Thanks"},
@@ -66,7 +66,7 @@ static void handle(SDL_Event* e)
         scene_switch_arg(SCENE_MAINMENU, NULL);
         return;
     }
-    if ((e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_DOWN) || e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_SPACE) {
+    if (e->type == SDL_KEYDOWN && (e->key.keysym.sym == SDLK_DOWN || e->key.keysym.sym == SDLK_SPACE)) {
         scroll_speed = 120.0f;
     }
     if (e->type == SDL_KEYUP && e->key.keysym.sym == SDLK_DOWN) {

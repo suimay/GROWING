@@ -5,7 +5,7 @@
 #include "../include/ui.h"
 #include "../include/core.h"   // PlantInfo, plantdb_get
 #include "../include/save.h"
-#include <stdio.h>
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>

@@ -436,9 +436,6 @@ static void render(SDL_Renderer *r)
     TTF_Font *titleFont = s_titleFont ? s_titleFont : G_FontMain;
     if (titleFont)
     {
-        SDL_Color shadow = {0, 0, 0, 160};
-        SDL_Color mainC = {235, 245, 235, 255};
-
         if (s_title)
         {
             SDL_Rect dst = {0, 0, w, h};

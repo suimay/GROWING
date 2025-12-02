@@ -94,8 +94,8 @@ bool save_mark_plant_completed(const char* plant_id) {
     if (!root) {
         root = json_value_init_object();
         obj = json_value_get_object(root);
-        arr = json_value_init_array();
-        json_object_set_value(obj, "unlocked", arr);
+        JSON_Value* arrv = json_value_init_array();
+        json_object_set_value(obj, "unlocked", arrv);
         arr = json_object_get_array(obj, "unlocked");
     }
     else {
@@ -181,21 +181,6 @@ static bool append_log_obj(const char* plant_id, JSON_Object* log_obj) {
     json_serialize_to_file_pretty(root, path);
     json_value_free(root);
     return true;
-}
-
-static bool add_log_common(const char* plant_id, const char* event, void (*fill)(JSON_Object*)) {
-    if (!plant_id || !event) return false;
-    char ts[32]; now_ts(ts, sizeof(ts));
-
-    JSON_Value* v = json_value_init_object();
-    JSON_Object* o = json_value_get_object(v);
-    json_object_set_string(o, "ts", ts);
-    json_object_set_string(o, "event", event);
-    if (fill) fill(o);
-
-    bool ok = append_log_obj(plant_id, o);
-    json_value_free(v);
-    return ok;
 }
 
 // ——— 공개 API 구현 ———
