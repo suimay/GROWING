@@ -99,6 +99,9 @@
     <ClCompile Include="utils\parson.c">
       <Filter>소스 파일\utils</Filter>
     </ClCompile>
+    <ClCompile Include="utils\weather.c">
+      <Filter>소스 파일\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\scene.h">
@@ -135,6 +138,9 @@
       <Filter>헤더 파일\include</Filter>
     </ClInclude>
     <ClInclude Include="include\gameplay.h">
+      <Filter>헤더 파일\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\weather.h">
       <Filter>헤더 파일\include</Filter>
     </ClInclude>
   </ItemGroup>

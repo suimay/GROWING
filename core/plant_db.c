@@ -2,6 +2,7 @@
 #include "../include/core.h"
 #include <parson.h>   // vcpkg or local header
 
+
 static PlantInfo* g_plants = NULL;
 static int g_count = 0;
 
@@ -69,3 +70,4 @@ int plantdb_find_index_by_id(const char* id) {
     }
     return -1; // 찾지 못함
 }
+

@@ -19,6 +19,10 @@ typedef struct
     void *userdata;
 
     SDL_Texture *bg_texture;
+
+    SDL_Texture* tex_normal;
+    SDL_Texture* tex_hover;
+    SDL_Texture* tex_pressed;
 } UIButton;
 
 typedef struct

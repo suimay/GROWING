@@ -155,6 +155,7 @@
     <ClCompile Include="utils\parson.c" />
     <ClCompile Include="utils\settings.c" />
     <ClCompile Include="utils\timer.c" />
+    <ClCompile Include="utils\weather.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h" />
@@ -168,6 +169,7 @@
     <ClInclude Include="include\settings.h" />
     <ClInclude Include="include\ui.h" />
     <ClInclude Include="include\utils.h" />
+    <ClInclude Include="include\weather.h" />
     <ClInclude Include="scene_manager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

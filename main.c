@@ -22,7 +22,10 @@ int main(void)
         SDL_Log("Settings load failed, using defaults.");
     }
 
+
     settings_apply_audio();
+    system("python assets/weather_update.py");
+    SDL_Log("날씨 업데이트 1회 완료");
     // 창 모드 적용 예시 (원하면)
     // if (G_Settings.video.fullscreen) SDL_SetWindowFullscreen(G_Window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     // SDL_SetWindowSize(G_Window, G_Settings.video.width, G_Settings.video.height);

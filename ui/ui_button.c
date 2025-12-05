@@ -17,6 +17,16 @@ void ui_button_init(UIButton *b, SDL_Rect r, const char *text)
     b->on_click = NULL;
     b->userdata = NULL;
 }
+void ui_button_set_icons(UIButton* b,
+    SDL_Texture* normal,
+    SDL_Texture* hover,
+    SDL_Texture* pressed)
+{
+    b->tex_normal = normal;
+    b->tex_hover = hover;
+    b->tex_pressed = pressed;
+}
+
 
 void ui_button_set_callback(UIButton *b, UIButtonOnClick fn, void *userdata)
 {
@@ -64,49 +74,64 @@ void ui_button_handle(UIButton *b, const SDL_Event *e)
         b->pressed = 0;
     }
 }
-void ui_button_render(SDL_Renderer *ren, TTF_Font *font, const UIButton *b, SDL_Texture *bg)
+
+void ui_button_render(SDL_Renderer* ren, TTF_Font* font, const UIButton* b, SDL_Texture* override_bg)
 {
-    if (bg)
-    {
-        // 배경 이미지가 주어졌으면 이미지 렌더링
-        SDL_RenderCopy(ren, bg, NULL, &b->r);
+    // 1) 어떤 텍스처를 쓸지 상태에 따라 결정
+    SDL_Texture* tex = override_bg;  // 매개변수로 강제 배경이 들어온 경우 최우선
+
+    if (!tex) {
+        // override 없으면 버튼 상태를 보고 선택
+        if (b->pressed && b->tex_pressed) {
+            tex = b->tex_pressed;
+        }
+        else if (b->hovered && b->tex_hover) {
+            tex = b->tex_hover;
+        }
+        else if (b->tex_normal) {
+            tex = b->tex_normal;
+        }
+        else if (b->bg_texture) {
+            tex = b->bg_texture;
+        }
     }
-    else
-    {
-        // 아니면 기본 색상 박스
-        SDL_SetRenderDrawColor(ren, 80, 80, 80, 255);
+
+    // 2) 텍스처 있으면 그거 사용, 없으면 색 박스
+    if (tex) {
+        SDL_RenderCopy(ren, tex, NULL, &b->r);
+    }
+    else {
+        // 상태에 따른 색만 살짝 바꿔도 됨
+        if (!b->enabled) {
+            SDL_SetRenderDrawColor(ren, 60, 60, 60, 255);
+        }
+        else if (b->pressed) {
+            SDL_SetRenderDrawColor(ren, 40, 100, 160, 255);
+        }
+        else if (b->hovered) {
+            SDL_SetRenderDrawColor(ren, 70, 140, 255, 255);
+        }
+        else {
+            SDL_SetRenderDrawColor(ren, 80, 80, 80, 255);
+        }
         SDL_RenderFillRect(ren, &b->r);
     }
 
-    // 텍스트
-    /*
-    if (font && b->text) {
-        SDL_Color fg = { 230,230,230,255 };
-        SDL_Surface* s = TTF_RenderUTF8_Blended(font, b->text, fg);
-        if (s) {
-            SDL_Texture* t = SDL_CreateTextureFromSurface(ren, s);
-            int w, h; SDL_QueryTexture(t, NULL, NULL, &w, &h);
-            SDL_Rect d = { b->r.x + (b->r.w - w) / 2, b->r.y + (b->r.h - h) / 2, w, h };
-            SDL_RenderCopy(ren, t, NULL, &d);
-            SDL_DestroyTexture(t);
-            SDL_FreeSurface(s);
-        }
-    }
-    */
-
-    if (font && b->text && *b->text)
-    {
-        SDL_Color c = {255, 255, 255, 255};
-        SDL_Surface *s = TTF_RenderUTF8_Blended(font, b->text, c);
-        SDL_Texture *t = SDL_CreateTextureFromSurface(ren, s);
-        int tw, th;
-        SDL_QueryTexture(t, NULL, NULL, &tw, &th);
+    // 3) 텍스트는 그대로 중앙 정렬
+    if (font && b->text && *b->text) {
+        SDL_Color c = { 255, 255, 255, 255 };
+        SDL_Surface* s = TTF_RenderUTF8_Blended(font, b->text, c);
+        if (!s) return;
+        SDL_Texture* t = SDL_CreateTextureFromSurface(ren, s);
+        int tw, th; SDL_QueryTexture(t, NULL, NULL, &tw, &th);
         SDL_Rect dst = {
             b->r.x + (b->r.w - tw) / 2,
             b->r.y + (b->r.h - th) / 2,
-            tw, th};
+            tw, th
+        };
         SDL_RenderCopy(ren, t, NULL, &dst);
         SDL_FreeSurface(s);
         SDL_DestroyTexture(t);
     }
 }
+

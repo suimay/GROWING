@@ -382,7 +382,8 @@ static void plantinfo_on_back(void *ud)
 static void plantinfo_on_select(void* userdata) {
     (void)userdata;
     // 현재 화면에서 선택한 식물 인덱스를 사용
-    int idx = (int)(intptr_t)userdata;
+
+    int idx = s_ctx.plant_index;   // ✅ 여기서 직접 가져오기
     G_SelectedPlantIndex = idx;
 
     const PlantInfo* plant = plantdb_get(idx);

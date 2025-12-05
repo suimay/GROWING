@@ -377,6 +377,36 @@ static void init(void *arg)
         SDL_Log("[MAINMENU] No font available (both title and global NULL)");
     }
 
+    SDL_Texture* texplayHover = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_start_hover.png");
+    SDL_Texture* texplayPressed = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_start_pressed.png");
+
+    ui_button_set_icons(&s_buttons[0], s_play, texplayHover, texplayPressed);
+
+    SDL_Texture* texcontinueHover = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_continue_hover.png");
+    SDL_Texture* texcontinuePressed = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_continue_pressed.png");
+
+    ui_button_set_icons(&s_buttons[1], s_continue, texcontinueHover, texcontinuePressed);
+
+    SDL_Texture* texcollectionHover = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_collection_hover.png");
+    SDL_Texture* texcollectionPressed = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_collection_pressed.png");
+
+    ui_button_set_icons(&s_buttons[2], s_collection, texcollectionHover, texcollectionPressed);
+
+    SDL_Texture* texsettingsHover = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_setting_hover.png");
+    SDL_Texture* texsettingsPressed = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_setting_pressed.png");
+
+    ui_button_set_icons(&s_buttons[3], s_settings, texsettingsHover, texsettingsPressed);
+
+    SDL_Texture* texcreditsHover = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_credit_hover.png");
+    SDL_Texture* texcreditsPressed = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_credit_pressed.png");
+
+    ui_button_set_icons(&s_buttons[4], s_credits, texcreditsHover, texcreditsPressed);
+
+    SDL_Texture* texexitHover = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_quit_hover.png");
+    SDL_Texture* texexitPressed = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "B_quit_pressed.png");
+
+    ui_button_set_icons(&s_buttons[5], s_quit, texexitHover, texexitPressed);
+
     // render() 타이틀 그리기 직전에
     SDL_Log("[MAINMENU] render title try");
 
@@ -526,10 +556,12 @@ static void render(SDL_Renderer *r)
     */
 
     // 4) 버튼
-    for (int i = 0; i < BTN_COUNT; i++)
-    {
-        ui_button_render(r, G_FontMain, &s_buttons[i], s_button_img[i]);
-    }
+    ui_button_render(r, G_FontMain, &s_buttons[0], NULL);
+    ui_button_render(r, G_FontMain, &s_buttons[1], NULL);
+    ui_button_render(r, G_FontMain, &s_buttons[2], NULL);
+    ui_button_render(r, G_FontMain, &s_buttons[3], NULL);
+    ui_button_render(r, G_FontMain, &s_buttons[4], NULL);
+    ui_button_render(r, G_FontMain, &s_buttons[5], NULL);
 }
 
 static void cleanup(void)
