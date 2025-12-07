@@ -8,7 +8,7 @@
 #include "../include/settings.h"   // settings_apply_audio
 #include "../include/gameplay.h"
 #include "../include/weather.h"
-
+#include "../include/anim_util.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -73,13 +73,11 @@ static SDL_Texture* s_lamp_leveldown = NULL;
 static SDL_Texture* s_exit = NULL;
 
 ///// 식물 경험치
-static int   s_plantLevel = 1;
+static int   s_plantLevel = 3;
 static float s_plantExp = 0.f;
 
 ////////////////////////////////////////// 식물 텍스쳐 (예시)
-static SDL_Texture* s_monsteraLv1 = NULL;
-static SDL_Texture* s_monsteraLv2 = NULL;
-static SDL_Texture* s_monsteraLv3 = NULL;
+static SDL_Texture* s_monstera = NULL;
 
 /////////////////////////////////////// 날씨!
 static WeatherInfo g_weather;
@@ -109,10 +107,21 @@ static bool s_hasBug = false;
 static bool s_hasMold = false;
 bool nutrition_ok ; 
 
-static int   s_activeWeatherEvent = WEATHER_TAG_CLEAR;
+static int   s_activeWeatherEvent = 0;
 static float s_weatherEventTimer = 0.f;
 
-WeatherTag original;
+float cooltime = 20.f;
+
+static WeatherTag s_originalWeatherTag = WEATHER_TAG_CLEAR;
+
+// 액션별 경험치 기본값 🐥
+
+#define EXP_WATER 1.0f
+#define EXP_KILL_BUG 10.0f
+#define EXP_REMOVE_MOLD 12.0f
+#define EXP_GIVE_FERT 5.0f
+#define EXP_TEMP_DOWN 3.0f
+#define EXP_TEMP_UP 3.0f
 
 // 어떤 업데이트 함수 안에서
 void update_status(void)
@@ -198,8 +207,8 @@ static void update_humidity(float dt)
 static void update_random_events(float dt)
 {
     // dt기반으로도 만들 수 있지만, 간단하게 매 프레임 작은 확률
-    float bugChancePerSec = 0.5f; // 추측 //0.0005f
-    float moldChancePerSec = 0.5f; // 추측
+    float bugChancePerSec = 0.0005f; // 추측 //0.0005f
+    float moldChancePerSec = 0.0005f; // 추측
 
     float bugProbThisFrame = bugChancePerSec * dt;
     float moldProbThisFrame = moldChancePerSec * dt;
@@ -252,47 +261,69 @@ static void update_nutrition(float dt)
     update_status();
 }
 
-static void update_weather_event(float dt)
+void start_weather_event(WeatherTag eventTag, float duration)
+{
+    if (s_activeWeatherEvent) return;  // 이미 이벤트 중이면 무시
+
+    s_activeWeatherEvent = 1;
+    s_weatherEventTimer = duration;
+
+    SDL_Log("[WEATHER EVENT] BEFORE START: g_weather.tag=%d", (int)g_weather.tag);
+
+    // ★ 여기서 '그 시점의 실제 날씨'를 저장
+    s_originalWeatherTag = g_weather.tag;
+
+    // 그리고 이벤트용 날씨로 바꿈
+    g_weather.tag = eventTag;
+
+    SDL_Log("[WEATHER EVENT] start: base=%d event=%d", (int)s_originalWeatherTag, (int)eventTag);
+}
+
+static void update_weather_event(float dt )
 {
     
-    if (s_activeWeatherEvent == 0) {
+   
+    if (s_activeWeatherEvent == 0 ) {
         // 이벤트 없음 → 아주 낮은 확률로 발생 (추측)
-        float chancePerSec = 0.9f; // 0.0001f
+        float chancePerSec = 0.0001f; // 0.0001f
         float p = chancePerSec * dt;
         float r = (float)rand() / (float)RAND_MAX;
 
         int weather = rand() % 10;
-
+        
         //printf("%d < %d %d \n",r,p, weather);
         if (r < p) {
             // 현재 실제 날씨랑 랜덤 event 날씨를 하나 선택 (추측)
             //s_activeWeatherEvent = g_weather.tag; // 일단 동일로
-            if (weather < 2) s_activeWeatherEvent = WEATHER_TAG_RAIN;
-            else if ( weather > 1 && weather < 4 ) s_activeWeatherEvent = WEATHER_TAG_CLOUDY;
-            else if (weather > 3 && weather < 6) s_activeWeatherEvent = WEATHER_TAG_SNOW;
-            else if (weather > 5 && weather < 8) s_activeWeatherEvent = WEATHER_TAG_CLEAR;
+            int w = rand() % 10;
+            WeatherTag eventTag;
 
-            printf("%d < %d %d \n", r, p, weather);
+            if (w < 2) eventTag = WEATHER_TAG_RAIN; // 3
+            else if (w < 4) eventTag = WEATHER_TAG_CLOUDY; // 2
+            else if (w < 6) eventTag = WEATHER_TAG_SNOW; // 4
+            else            eventTag = WEATHER_TAG_CLEAR; // 1
+
+            start_weather_event(eventTag, 60.f);
+
             // 1~2분 사이 지속 (추측)
             float durMin = 1.f + ((float)rand() / RAND_MAX) * 1.f;
             s_weatherEventTimer = durMin * 20.f; //durMin * 60.f; 
-            SDL_Log("[WEATHER EVENT] start tag=%d", s_activeWeatherEvent);
-            original = g_weather.tag;
-
-            g_weather.tag = s_activeWeatherEvent;
+            
         }
     }
     else {
         // 진행 중
         s_weatherEventTimer -= dt;
         if (s_weatherEventTimer <= 0.f) {
-            SDL_Log("[WEATHER EVENT] end");
-            g_weather.tag = original;
+            SDL_Log("[WEATHER EVENT] end, restore=%d", (int)s_originalWeatherTag);
+            g_weather.tag = s_originalWeatherTag;  // ★ 원래 날씨 복원
             s_activeWeatherEvent = 0;
+            cooltime = 20.f;
         }
     }
 
     update_status();
+
 }
 
 static float get_exp_multiplier(void)
@@ -303,6 +334,22 @@ static float get_exp_multiplier(void)
         return 1.5f;
     }
     return 1.0f;
+}
+
+static void add_exp(float baseExp)
+{
+    if (baseExp <= 0.f)
+        return;
+
+    float mul = get_exp_multiplier();
+    s_plantExp += baseExp * mul;
+
+    while (s_plantExp >= 100.f)
+    {
+        s_plantExp -= 100.f;
+        s_plantLevel++;
+        SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -458,6 +505,55 @@ static bool         s_bgFramesUseAtlas = false;
 ///////////////////////////////////////////////////////
 // 이벤트 애니메이션
 ///////////////////////////////////////////////////////
+
+#define BUG_IDLE_FRAME_W 480
+#define BUG_IDLE_FRAME_H 270
+#define BUG_IDLE_FRAMES 4
+
+#define MOLD_IDLE_FRAME_W 480
+#define MOLD_IDLE_FRAME_H 270
+#define MOLD_IDLE_FRAMES 4
+
+#define BUG_SPRAY_FRAME_W 480
+#define BUG_SPRAY_FRAME_H 270
+#define BUG_SPRAY_FRAMES 6
+
+#define MOLD_SPRAY_FRAME_W 480
+#define MOLD_SPRAY_FRAME_H 270
+#define MOLD_SPRAY_FRAMES 6
+
+#define IDLE_FPS 6.0f
+#define SPRAY_FPS 12.0f
+
+
+typedef struct
+{
+    float timer;
+    int currentFrame;
+    int totalFrames;
+    float frameDuration;
+} IdleAnim;
+
+typedef struct
+{
+    bool active;
+    float timer;
+    int currentFrame;
+    int totalFrames;
+    float frameDuration;
+} SprayAnim;
+
+static SDL_Texture* s_texBugIdle = NULL;
+static SDL_Texture* s_texMoldIdle = NULL;
+static SDL_Texture* s_texBugSpray = NULL;
+static SDL_Texture* s_texMoldSpray = NULL;
+
+static IdleAnim s_bugIdleAnim = { 0 };
+static IdleAnim s_moldIdleAnim = { 0 };
+static SprayAnim s_bugSprayAnim = { 0 };
+static SprayAnim s_moldSprayAnim = { 0 };
+
+
 typedef struct {
     SDL_Rect rect;
     int      duration_ms;
@@ -678,9 +774,23 @@ static void event_anim_start(void)
         return;
     }
 
-    s_eventPlaying = 1;
-    s_eventFrameIndex = 0;
-    s_eventFrameElapsedMs = 0.f;
+    if (s_eventtype == 2) {
+        s_eventPlaying = 0;
+        s_eventFrameIndex = 0;
+        s_eventFrameElapsedMs = 0.f;
+    }
+    else if (s_eventtype == 3){
+        s_eventPlaying = 0;
+        s_eventFrameIndex = 0;
+        s_eventFrameElapsedMs = 0.f;
+    }
+    else {
+        s_eventPlaying = 1;
+        s_eventFrameIndex = 0;
+        s_eventFrameElapsedMs = 0.f;
+    }
+
+   
 }
 
 static void event_anim_update(float dt)
@@ -733,6 +843,99 @@ static void event_play(int type)
     event_anim_start();
 }
 
+static void update_idle_anim(IdleAnim* a, float dt)
+{
+    if (!a || a->totalFrames <= 1)
+        return;
+    a->timer += dt;
+    if (a->timer >= a->frameDuration)
+    {
+        a->timer -= a->frameDuration;
+        a->currentFrame = (a->currentFrame + 1) % a->totalFrames;
+    }
+}
+
+static void update_spray_anim(SprayAnim* a, float dt)
+{
+    if (!a || !a->active)
+        return;
+    a->timer += dt;
+    while (a->timer >= a->frameDuration)
+    {
+        a->timer -= a->frameDuration;
+        a->currentFrame++;
+        if (a->currentFrame >= a->totalFrames)
+        {
+            a->active = false;
+            break;
+        }
+    }
+}
+
+static void update_spray_anims(float dt)
+{
+    update_idle_anim(&s_bugIdleAnim, dt);
+    update_idle_anim(&s_moldIdleAnim, dt);
+    update_spray_anim(&s_bugSprayAnim, dt);
+    update_spray_anim(&s_moldSprayAnim, dt);
+}
+
+static void render_idle_with_frames(SDL_Renderer* r, SDL_Texture* tex, const IdleAnim* a,
+    int frameW, int frameH, int totalFrames, int x, int y)
+{
+    if (!tex)
+        return;
+    int frameCount = (totalFrames > 0) ? totalFrames : 1;
+    int frameIdx = (a && frameCount > 1) ? a->currentFrame % frameCount : 0;
+    SDL_Rect src = { frameIdx * frameW, 0, frameW, frameH };
+    SDL_Rect dst = { x, y, frameW, frameH };
+    SDL_RenderCopy(r, tex, &src, &dst);
+}
+
+static void render_spray(SDL_Renderer* r, SDL_Texture* tex, const SprayAnim* a,
+    int frameW, int frameH, int totalFrames, int x, int y)
+{
+    if (!tex || !a || !a->active)
+        return;
+    int frameCount = (totalFrames > 0) ? totalFrames : 1;
+    int frameIdx = (a->currentFrame < frameCount) ? a->currentFrame : frameCount - 1;
+    SDL_Rect src = { frameIdx * frameW, 0, frameW, frameH };
+    SDL_Rect dst = { x, y, frameW, frameH };
+    SDL_RenderCopy(r, tex, &src, &dst);
+}
+
+static void render_bug_mold(SDL_Renderer* r, int screenW, int screenH)
+{
+    // 화분 기준 대략적인 위치 (조정해야함.. 싹싹🙏)
+    int baseY = screenH - 500;
+    if (s_hasBug)
+    {
+        int x = screenW / 2 - 300;
+        render_idle_with_frames(r, s_texBugIdle, &s_bugIdleAnim,
+            BUG_IDLE_FRAME_W, BUG_IDLE_FRAME_H, BUG_IDLE_FRAMES,
+            x, baseY);
+    }
+    if (s_hasMold)
+    {
+        int x = screenW / 2 - 200;
+        render_idle_with_frames(r, s_texMoldIdle, &s_moldIdleAnim,
+            MOLD_IDLE_FRAME_W, MOLD_IDLE_FRAME_H, MOLD_IDLE_FRAMES,
+            x, baseY);
+    }
+}
+
+static void render_spray_anims(SDL_Renderer* r, int screenW, int screenH)
+{
+    int baseY = screenH - 500;
+    render_spray(r, s_texBugSpray, &s_bugSprayAnim,
+        BUG_SPRAY_FRAME_W, BUG_SPRAY_FRAME_H, BUG_SPRAY_FRAMES,
+        screenW / 2 - 300, baseY);
+    render_spray(r, s_texMoldSpray, &s_moldSprayAnim,
+        MOLD_SPRAY_FRAME_W, MOLD_SPRAY_FRAME_H, MOLD_SPRAY_FRAMES,
+        screenW / 2 - 200, baseY);
+}
+
+
 // -----------------------------
 // 버튼 콜백
 // -----------------------------
@@ -757,21 +960,20 @@ static void on_water(void* ud)
     s_waterCount++;
     if (s_plant) log_water(s_plant->id, 120);
 
-    event_play(1); // 물 이벤트
-
+    event_play(1);      // 물 이벤트
     
+
     float mul = get_exp_multiplier();
     s_plantExp += 1.f * mul;
+    
+    add_exp(EXP_WATER); //물 경험치 추가🐥
 
-    // on_water()
     s_status.moisture += 10.f;
-    if (s_status.moisture > 100.f) s_status.moisture = 100.f;
 
-    while (s_plantExp >= 100.f) {
-        s_plantExp -= 100.f;
-        s_plantLevel++;
-        SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
-    }
+    if (s_status.moisture > 100.f)
+        s_status.moisture = 100.f;
+
+    
 }
 
 static void on_window(void* ud)
@@ -795,22 +997,29 @@ static void on_nobug(void* ud)
     ui_button_set_sfx(&s_btnnobug, G_SFX_Click, NULL);
     event_play(2);
 
-    if (s_hasBug) {
-        s_hasBug = false;
-        s_status.happiness += 10.f;   // 추측
-        if (s_status.happiness > 100.f) s_status.happiness = 100.f;
+    if (!s_hasBug)
+    {
+        SDL_Log("[EVENT] no bug to kill");
+        return;
     }
 
-    // 경험치
-    float mul = get_exp_multiplier();
-    s_plantExp += 1.f * mul;
+    // 2) 분무기/이펙트 애니메이션 시작 (스프레이 전용)
+    
+    s_bugSprayAnim.active = true;
+    s_bugSprayAnim.timer = 0.f;
+    s_bugSprayAnim.currentFrame = 0;
+    
 
-    while (s_plantExp >= 100.f) {
-        s_plantExp -= 100.f;
-        s_plantLevel++;
-        SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
-    }
-    SDL_Log("kill bug");
+    // 3) 실제 상태 변화 (즉시 제거, 시각 효과는 계속 재생)
+    s_hasBug = false;
+    s_status.happiness += 10.f;
+    if (s_status.happiness > 100.f)
+        s_status.happiness = 100.f;
+
+    // 4) 경험치 + 레벨업 (킬 성공시에만)
+    add_exp(EXP_KILL_BUG);
+
+    SDL_Log("[EVENT] kill bug");
 }
 
 static void on_nogom(void* ud)
@@ -819,20 +1028,29 @@ static void on_nogom(void* ud)
     ui_button_set_sfx(&s_btnnogom, G_SFX_Click, NULL);
     event_play(3);
 
-    if (s_hasMold) {
-        s_hasMold = false;
-        s_status.happiness += 10.f; // 추측
-        if (s_status.happiness > 100.f) s_status.happiness = 100.f;
+    if (!s_hasMold)
+    {
+        SDL_Log("[EVENT] no mold to remove");
+        return;
     }
 
-    float mul = get_exp_multiplier();
-    s_plantExp += 1.f * mul;
+    // 2) 분무기/이펙트 애니 시작 (스프레이 전용)
+    
+    s_moldSprayAnim.active = true;
+    s_moldSprayAnim.timer = 0.f;
+    s_moldSprayAnim.currentFrame = 0;
+    
 
-    while (s_plantExp >= 100.f) {
-        s_plantExp -= 100.f;
-        s_plantLevel++;
-        SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
-    }
+    // 3) 곰팡이 제거 + 행복도 (즉시 플래그 내림, 애니는 계속 재생)
+    s_hasMold = false;
+    s_status.happiness += 10.f;
+    if (s_status.happiness > 100.f)
+        s_status.happiness = 100.f;
+
+    // 4) 경험치 + 레벨업
+    add_exp(EXP_REMOVE_MOLD);
+
+    SDL_Log("[EVENT] remove mold");
 }
 
 static void on_ifhot(void* ud)
@@ -844,11 +1062,7 @@ static void on_ifhot(void* ud)
     float mul = get_exp_multiplier();
     s_plantExp += 1.f * mul;
 
-    while (s_plantExp >= 100.f) {
-        s_plantExp -= 100.f;
-        s_plantLevel++;
-        SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
-    }
+    add_exp(EXP_TEMP_DOWN);
     SDL_Log("temperature down");
     s_room_temperature--;
     s_status.temp = (float)s_room_temperature;
@@ -863,11 +1077,7 @@ static void on_ifcold(void* ud)
     float mul = get_exp_multiplier();
     s_plantExp += 1.f * mul;
 
-    while (s_plantExp >= 100.f) {
-        s_plantExp -= 100.f;
-        s_plantLevel++;
-        SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
-    }
+    add_exp(EXP_TEMP_UP);
     SDL_Log("temperature up");
     s_room_temperature++;
     s_status.temp = (float)s_room_temperature;
@@ -885,12 +1095,7 @@ static void on_biryo(void* ud)
     float mul = get_exp_multiplier();
     s_plantExp += 1.f * mul;
 
-    while (s_plantExp >= 100.f) {
-        s_plantExp -= 100.f;
-        s_plantLevel++;
-        SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
-    }
-
+    add_exp(EXP_GIVE_FERT);
 
     SDL_Log("give nutrients");
 }
@@ -1308,6 +1513,42 @@ static void init(void* arg)
         else SDL_Log("exit loading success");
     }
 
+    if (!s_texBugIdle)
+    {
+        s_texBugIdle = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "event_bugs.png");
+        if (!s_texBugIdle)
+            SDL_Log("GAMEPLAY: load event_bugs.png fail: %s", IMG_GetError());
+    }
+    if (!s_texMoldIdle)
+    {
+        s_texMoldIdle = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "event_gompang.png");
+        if (!s_texMoldIdle)
+            SDL_Log("GAMEPLAY: load event_gompang.png fail: %s", IMG_GetError());
+    }
+    if (!s_texBugSpray)
+    {
+        s_texBugSpray = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "event_bugSpray.png");
+        if (!s_texBugSpray)
+            SDL_Log("GAMEPLAY: load event_bugSpray.png fail: %s", IMG_GetError());
+    }
+    if (!s_texMoldSpray)
+    {
+        s_texMoldSpray = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "event_gompangSpray.png");
+        if (!s_texMoldSpray)
+            SDL_Log("GAMEPLAY: load event_gompangSpray.png fail: %s", IMG_GetError());
+    }
+
+    s_bugIdleAnim.totalFrames = BUG_IDLE_FRAMES;
+    s_bugIdleAnim.frameDuration = 1.0f / IDLE_FPS;
+    s_moldIdleAnim.totalFrames = MOLD_IDLE_FRAMES;
+    s_moldIdleAnim.frameDuration = 1.0f / IDLE_FPS;
+
+    s_bugSprayAnim.totalFrames = BUG_SPRAY_FRAMES;
+    s_bugSprayAnim.frameDuration = 1.0f / SPRAY_FPS;
+    s_moldSprayAnim.totalFrames = MOLD_SPRAY_FRAMES;
+    s_moldSprayAnim.frameDuration = 1.0f / SPRAY_FPS;
+
+
 
     // 날씨 데이터 초기 로드
     if (weather_load(&g_weather)) {
@@ -1389,10 +1630,20 @@ static void init(void* arg)
     s_status.happiness = 70.f;
     s_status.nutrition = 70.f;
 
+    if (s_plantLevel == 1) {
+        s_monstera = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv1.png");
+    }
+    else if (s_plantLevel == 2) {
+        s_monstera = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv2.png");
+        //anim_load_from_json(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv2.png", ASSETS_DIR "data/monsteraLv2.json", s_plantFrames, 64, &s_monstera, &s_plantFrameCount);
 
-    s_monsteraLv1 = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv1.png");
+    }
+    else if (s_plantLevel == 3) {
+        s_monstera = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv3.png");
+        //anim_load_from_json(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv3.png", ASSETS_DIR "data/monsteraLv3.json", s_plantFrames, 64, &s_monstera, &s_plantFrameCount);
+    }
 
-
+    
 
     settings_apply_audio();
     layout();
@@ -1459,6 +1710,19 @@ static void update(float dt)
         // printf("[TIMEOFDAY] mode=%d\n", g_timeOfDay);
     }
 
+
+    if (s_plantLevel == 1) {
+        s_monstera = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv1.png");
+    }
+    else if (s_plantLevel == 2) {
+        s_monstera = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv2.png");
+        //anim_load_from_json(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv2.png", ASSETS_DIR "data/monsteraLv2.json", s_plantFrames, 64, &s_monstera, &s_plantFrameCount);
+
+    }
+    else if (s_plantLevel == 3) {
+        s_monstera = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv3.png");
+        //anim_load_from_json(G_Renderer, ASSETS_IMAGES_DIR "monsteraLv3.png", ASSETS_DIR "data/monsteraLv3.json", s_plantFrames, 64, &s_monstera, &s_plantFrameCount);
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     int w = 1920, h = 1080;
@@ -1642,9 +1906,15 @@ static void update(float dt)
         }
     }
 
+
     // 랜덤 이벤트들
+    cooltime -= dt;
+
+    if (cooltime <= 0.f) {
+        update_weather_event(dt);   // 랜덤 날씨 이벤트
+    }
+
     update_random_events(dt);   // 벌레, 곰팡이 생성
-    update_weather_event(dt);   // 랜덤 날씨 이벤트
 
     // 상태값 업데이트
     update_moisture(dt);
@@ -1653,6 +1923,7 @@ static void update(float dt)
     update_happiness(dt);
     update_nutrition(dt);
 
+    update_spray_anims(dt);
     // 이벤트 애니메이션 진행
     event_anim_update(dt);
 }
@@ -1749,19 +2020,43 @@ static void render(SDL_Renderer* r)
 
     // ★ 이벤트 애니메이션 렌더
 
-    SDL_Rect plant_location = (SDL_Rect){ w / 2 - 10, h - 330, 6 * 3, 17 * 3 };
-    SDL_RenderCopy(r, s_monsteraLv1, NULL, &plant_location);
+    if (s_plantLevel == 1) {
+        SDL_Rect plant_location = (SDL_Rect){ w / 2 - 10, h - 330, 6 * 3, 17 * 3 };
+        SDL_RenderCopy(r, s_monstera, NULL, &plant_location);
+    }
+    else if (s_plantLevel == 2) {
+        SDL_Rect plant_location = (SDL_Rect){ w / 2 - 70, h - 390, 56 * 2, 57 * 2 };
+        SDL_RenderCopy(r, s_monstera, NULL, &plant_location);
+    }
+    else if (s_plantLevel == 3) {
+        SDL_Rect plant_location = (SDL_Rect){ w / 2 - 125, h - 545, 116 * 2, 132 * 2 };
+        SDL_RenderCopy(r, s_monstera, NULL, &plant_location);
+    }
+    
+    /*
+    if (s_plantLevel == 1) {
+        SDL_RenderCopy(r, s_monstera, NULL, &plant_location);
+    }
+    else {
+        render_plant_anim(r, 0, 0);
+    }
+    */
+
+
+    render_bug_mold(r, w, h);
+
+    // 스프레이 애니 렌더 (버그/곰팡이 제거 시)🐥
+    render_spray_anims(r, w, h);
 
     event_anim_render(r);
 
-
     if (s_hasBug == true) {
-        SDL_Color bug = {255,255,255,255};
+        SDL_Color bug = {255,0,0,255};
         draw_text(r, bug, w / 2, 300, " 벌레가 나타났습니다!");
     }
     if (s_hasMold == true) {
-        SDL_Color bug = { 255,255,255,255 };
-        draw_text(r, bug, w / 2, 300, " 곰팡이가 나타났습니다!");
+        SDL_Color bug = { 0,255,0,255 };
+        draw_text(r, bug, w / 2, 350, " 곰팡이가 나타났습니다!");
     }
 
     if (lamp_panel == 1) {
@@ -1807,6 +2102,28 @@ static void cleanup(void)
     if (s_weatherClouds) { SDL_DestroyTexture(s_weatherClouds); s_weatherClouds = NULL; }
     if (s_weatherRain) { SDL_DestroyTexture(s_weatherRain);   s_weatherRain = NULL; }
     if (s_weatherSnow) { SDL_DestroyTexture(s_weatherSnow);   s_weatherSnow = NULL; }
+
+    if (s_texBugIdle)
+    {
+        SDL_DestroyTexture(s_texBugIdle);
+        s_texBugIdle = NULL;
+    }
+    if (s_texMoldIdle)
+    {
+        SDL_DestroyTexture(s_texMoldIdle);
+        s_texMoldIdle = NULL;
+    }
+    if (s_texBugSpray)
+    {
+        SDL_DestroyTexture(s_texBugSpray);
+        s_texBugSpray = NULL;
+    }
+    if (s_texMoldSpray)
+    {
+        SDL_DestroyTexture(s_texMoldSpray);
+        s_texMoldSpray = NULL;
+    }
+
 
     destroy_event_frames();
 
