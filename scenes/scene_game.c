@@ -73,6 +73,14 @@ static SDL_Texture *s_lamp_levelup = NULL;
 static SDL_Texture *s_lamp_leveldown = NULL;
 static SDL_Texture *s_exit = NULL;
 
+// 액션별 경험치 기본값 🐥
+#define EXP_WATER 1.0f
+#define EXP_KILL_BUG 10.0f
+#define EXP_REMOVE_MOLD 12.0f
+#define EXP_GIVE_FERT 5.0f
+#define EXP_TEMP_DOWN 3.0f
+#define EXP_TEMP_UP 3.0f
+
 // 벌레/곰팡이 idle + 스프레이 애니🐥🐥
 #define BUG_IDLE_FRAME_W 480
 #define BUG_IDLE_FRAME_H 270
@@ -92,14 +100,6 @@ static SDL_Texture *s_exit = NULL;
 
 #define IDLE_FPS 6.0f
 #define SPRAY_FPS 12.0f
-
-// 액션별 경험치 기본값
-#define EXP_WATER         1.0f
-#define EXP_KILL_BUG     10.0f
-#define EXP_REMOVE_MOLD  12.0f
-#define EXP_GIVE_FERT     5.0f
-#define EXP_TEMP_DOWN     3.0f
-#define EXP_TEMP_UP       3.0f
 
 typedef struct
 {
@@ -405,7 +405,7 @@ static float get_exp_multiplier(void)
     return 1.0f;
 }
 
-// 공통 경험치 처리
+// 공통 경험치 처리🐥
 static void add_exp(float baseExp)
 {
     if (baseExp <= 0.f)
@@ -976,7 +976,7 @@ static void render_spray(SDL_Renderer *r, SDL_Texture *tex, const SprayAnim *a,
 
 static void render_bug_mold(SDL_Renderer *r, int screenW, int screenH)
 {
-    // 화분 기준 대략적인 위치 (필요 시 조정)
+    // 화분 기준 대략적인 위치 (조정해야함.. 싹싹🙏)
     int baseY = screenH - 180;
     if (s_hasBug)
     {
@@ -1034,15 +1034,27 @@ static void on_water(void *ud)
     if (s_plant)
         log_water(s_plant->id, 120);
 
-    event_play(1); // 물 이벤트
-
-    add_exp(EXP_WATER);
+    event_play(1);      // 물 이벤트
+                        /* 기존 코드 삭제‼️
+                            float mul = get_exp_multiplier();
+                            s_plantExp += 1.f * mul;
+                        */
+    add_exp(EXP_WATER); /*물 경험치 추가🐥*/
 
     // on_water()
-    s_status.moisture += 10.f;
+    s_status.moisture += float mul = get_exp_multiplier();
+    s_plantExp += 1.f * mul;
+    10.f;
     if (s_status.moisture > 100.f)
         s_status.moisture = 100.f;
-
+    /*기존 코드 삭제‼️
+    while (s_plantExp >= 100.f)
+    {
+        s_plantExp -= 100.f;
+        s_plantLevel++;
+        SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
+    }
+    */
 }
 
 static void on_window(void *ud)
@@ -1152,8 +1164,18 @@ static void on_ifhot(void *ud)
     (void)ud;
     ui_button_set_sfx(&s_btnifhot, G_SFX_Click, NULL);
     event_play(5);
+    /* 기존 코드 삭제‼️
+      float mul = get_exp_multiplier();
+        s_plantExp += 1.f * mul;
 
-    add_exp(EXP_TEMP_DOWN);
+        while (s_plantExp >= 100.f)
+        {
+            s_plantExp -= 100.f;
+            s_plantLevel++;
+            SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
+        }
+            */
+    add_exp(EXP_TEMP_DOWN); /*exp추가~~🐥*/
     SDL_Log("temperature down");
     s_room_temperature--;
     s_status.temp = (float)s_room_temperature;
@@ -1164,8 +1186,18 @@ static void on_ifcold(void *ud)
     (void)ud;
     ui_button_set_sfx(&s_btnifcold, G_SFX_Click, NULL);
     event_play(4);
+    /*. 기존 코드 삭제‼️
+        float mul = get_exp_multiplier();
+        s_plantExp += 1.f * mul;
 
-    add_exp(EXP_TEMP_UP);
+        while (s_plantExp >= 100.f)
+        {
+            s_plantExp -= 100.f;
+            s_plantLevel++;
+            SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
+        }
+            */
+    add_exp(EXP_TEMP_UP); /*exp추가~~🐥*/
     SDL_Log("temperature up");
     s_room_temperature++;
     s_status.temp = (float)s_room_temperature;
@@ -1180,8 +1212,18 @@ static void on_biryo(void *ud)
     s_status.nutrition += 20.f; // 추측
     if (s_status.nutrition > 100.f)
         s_status.nutrition = 100.f;
+    /*기존 코드 삭제‼️
+    float mul = get_exp_multiplier();
+    s_plantExp += 1.f * mul;
 
-    add_exp(EXP_GIVE_FERT);
+    while (s_plantExp >= 100.f)
+    {
+        s_plantExp -= 100.f;
+        s_plantLevel++;
+        SDL_Log("[GAME] plant level up! level = %d", s_plantLevel);
+    }
+    */
+    add_exp(EXP_GIVE_FERT); /*exp추가~~🐥*/
 
     SDL_Log("give nutrients");
 }
@@ -1210,7 +1252,7 @@ static void on_lamp_up(void *ud)
     if (s_light_level >= 0 && s_light_level < 2)
         s_light_level++;
     SDL_Log("[GAME] light_level %d.", s_light_level);
-    add_exp(EXP_TEMP_UP); // 램프 조작에 소량의 경험치 부여(임의 값)
+    add_exp(EXP_TEMP_UP); // 램프 조작에 소량의 경험치 부여(혹시.. 몰라서 이건 아직 임의 값)
 }
 
 static void on_lamp_down(void *ud)
@@ -1220,7 +1262,7 @@ static void on_lamp_down(void *ud)
     if (s_light_level > 0 && s_light_level <= 2)
         s_light_level--;
     SDL_Log("[GAME] light_level %d.", s_light_level);
-    add_exp(EXP_TEMP_DOWN); // 램프 조작에 소량의 경험치 부여(임의 값)
+    add_exp(EXP_TEMP_DOWN); // 램프 조작에 소량의 경험치 부여(이것도 아직 임의 값)
 }
 
 // -----------------------------
@@ -1722,7 +1764,7 @@ static void init(void *arg)
             SDL_Log("exit loading success");
     }
 
-    // 벌레/곰팡이 idle + 스프레이 텍스처
+    // 벌레/곰팡이 idle + 스프레이 텍스처🐥
     if (!s_texBugIdle)
     {
         s_texBugIdle = IMG_LoadTexture(G_Renderer, ASSETS_IMAGES_DIR "event_bugs.png");
@@ -1748,7 +1790,7 @@ static void init(void *arg)
             SDL_Log("GAMEPLAY: load event_gompangSpray.png fail: %s", IMG_GetError());
     }
 
-    // 애니메이션 기본 FPS 설정
+    // 애니메이션 기본 FPS 설정🐥
     s_bugIdleAnim.totalFrames = BUG_IDLE_FRAMES;
     s_bugIdleAnim.frameDuration = 1.0f / IDLE_FPS;
     s_moldIdleAnim.totalFrames = MOLD_IDLE_FRAMES;
@@ -2141,7 +2183,7 @@ static void update(float dt)
     update_happiness(dt);
     update_nutrition(dt);
 
-    // 스프레이/idle 애니 업데이트
+    // 스프레이/idle 애니 업데이트🐥
     update_spray_anims(dt);
 
     // 이벤트 애니메이션 진행
@@ -2255,14 +2297,14 @@ static void render(SDL_Renderer *r)
     SDL_Rect plant_location = (SDL_Rect){w / 2 - 10, h - 330, 6 * 3, 17 * 3};
     SDL_RenderCopy(r, s_monsteraLv1, NULL, &plant_location);
 
-    // 벌레/곰팡이 idle 렌더
+    // 벌레/곰팡이 idle 렌더🐥
     render_bug_mold(r, w, h);
 
-    // 스프레이 애니 렌더 (버그/곰팡이 제거 시)
+    // 스프레이 애니 렌더 (버그/곰팡이 제거 시)🐥
     render_spray_anims(r, w, h);
 
-    // 기존 event_anim_render는 물/기타 레거시용(TODO 필요시 정리)
-    // event_anim_render(r);
+    // 기존 event_anim_render는 물/기타 레거시용(TODO 필요시 정리)🐥
+    // event_anim_render(r);🐥
 
     if (s_hasBug == true)
     {
